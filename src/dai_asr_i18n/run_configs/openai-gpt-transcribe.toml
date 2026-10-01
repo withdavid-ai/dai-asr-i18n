@@ -1,0 +1,16 @@
+# Executable inference run profile.
+schema_version = 1
+name = "openai-gpt-transcribe-v1"
+channels = ["ch1", "ch2", "mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "openai-transcription"
+model_id = "gpt-transcribe"
+environment = ["OPENAI_API_KEY"]
+transcribes = true
+diarizes = false
+
+[model.options]
+response_format = "json"
+upload_bitrate = "128k"

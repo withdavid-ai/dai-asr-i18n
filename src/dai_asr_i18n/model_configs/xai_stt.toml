@@ -1,0 +1,23 @@
+schema_version = 1
+key = "xai_stt"
+display_name = "Grok Voice Transcribe 2.0"
+task = "asr_diarization"
+execution = "hosted_api"
+access = "proprietary"
+provider = "xAI"
+model_id = "grok-voice-transcribe-2.0"
+reproducibility = "provider_managed"
+language_policy = "explicit"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "id", "tl", "th"]
+channels = ["ch1", "ch2", "mono"]
+transcribes = true
+diarizes = true
+credentials = ["XAI_API_KEY"]
+
+[parameters]
+endpoint = "https://api.x.ai/v1/stt"
+diarize = true
+format = false
+filler_words = true
+vad_threshold = 0.5
+language_hint = true

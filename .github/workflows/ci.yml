@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --locked --group dev
+      - run: uv run pytest
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --locked --group dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run python -m build
+      - run: uv run twine check dist/*
+      - name: Test pip installation outside the source tree
+        run: |
+          wheel=$(find dist -name '*.whl' -print -quit)
+          python -m venv /tmp/dai-asr-i18n-wheel
+          /tmp/dai-asr-i18n-wheel/bin/python -m pip install "$wheel"
+          cd /tmp
+          /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n --version
+          /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n score \
+            --language zh --reference '學習語言' --hypothesis '学习语言'
+          printf '%s\n' '{"language":"en","reference":"alpha beta","hypothesis":"alpha"}' | \
+            /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n score --input -
+          /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n manifest --no-resource-hashes
+          /tmp/dai-asr-i18n-wheel/bin/python -c \
+            "from dai_asr_i18n.inference import load_run_config; load_run_config('whisper-large-v3-portable')"
+
+  local-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --locked --group dev --extra local
+      - run: uv run python -c "import faster_whisper, librosa; from dai_asr_i18n.inference import load_run_config; load_run_config('whisper-tiny-cpu-smoke')"
+      - run: uv run pytest

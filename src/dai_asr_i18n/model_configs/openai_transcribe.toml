@@ -1,0 +1,24 @@
+schema_version = 1
+key = "openai_transcribe"
+display_name = "OpenAI GPT-Transcribe"
+task = "asr"
+execution = "hosted_api"
+access = "proprietary"
+provider = "OpenAI"
+model_id = "gpt-transcribe"
+reproducibility = "provider_managed"
+language_policy = "attempt_all"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "zh", "id", "tl", "th", "bn", "mr", "te", "ta"]
+channels = ["ch1", "ch2", "mono"]
+transcribes = true
+diarizes = false
+credentials = ["OPENAI_API_KEY"]
+
+[parameters]
+endpoint = "https://api.openai.com/v1/audio/transcriptions"
+response_format = "json"
+language_hint = true
+upload_codec = "mp3"
+upload_sample_rate_hz = 16000
+upload_channels = 1
+upload_bitrate = "128k"

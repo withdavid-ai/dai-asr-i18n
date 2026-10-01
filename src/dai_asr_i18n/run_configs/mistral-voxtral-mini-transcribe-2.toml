@@ -1,0 +1,19 @@
+# Executable inference run profile.
+schema_version = 1
+name = "mistral-voxtral-mini-transcribe-2-v1"
+channels = ["ch1", "ch2", "mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "mistral-voxtral"
+model_id = "voxtral-mini-2602"
+environment = ["MISTRAL_API_KEY"]
+transcribes = true
+diarizes = true
+
+[model.options]
+diarize = true
+timestamp_granularities = ["segment"]
+temperature = 0.0
+stream = false
+language_hint = false

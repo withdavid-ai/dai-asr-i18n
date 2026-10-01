@@ -1,0 +1,21 @@
+# Executable inference run profile.
+schema_version = 1
+name = "whisper-tiny-cpu-smoke-v1"
+channels = ["ch1"]
+sample_rate_hz = 16000
+
+[model]
+backend = "faster-whisper"
+model_id = "Systran/faster-whisper-tiny"
+revision = "d90ca5fe260221311c53c58e660288d3deb8d356"
+device = "cpu"
+compute_type = "int8"
+authenticated = false
+
+[model.options]
+beam_size = 5
+word_timestamps = true
+task = "transcribe"
+temperature = 0.0
+condition_on_previous_text = true
+vad_filter = false

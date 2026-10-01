@@ -1,0 +1,27 @@
+schema_version = 1
+key = "qwen_asr"
+display_name = "Qwen3-ASR-1.7B"
+task = "asr"
+execution = "local"
+access = "open"
+provider = "Qwen"
+model_id = "Qwen/Qwen3-ASR-1.7B"
+model_revision = "7278e1e70fe206f11671096ffdd38061171dd6e5"
+reproducibility = "pinned"
+language_policy = "explicit"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "zh", "id", "tl", "th"]
+channels = ["ch1", "ch2", "mono"]
+transcribes = true
+diarizes = false
+credentials = []
+
+[parameters]
+runtime = "qwen-asr==0.0.6"
+gpu = "A10G"
+device = "cuda:0"
+dtype = "bfloat16"
+max_new_tokens = 2048
+language_hint = false
+max_input_s = 120.0
+window_target_factor = 0.98
+windowing = "audio_energy"

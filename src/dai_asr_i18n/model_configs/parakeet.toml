@@ -1,0 +1,22 @@
+schema_version = 1
+key = "parakeet"
+display_name = "NVIDIA Parakeet-TDT-0.6B-v3"
+task = "asr"
+execution = "local"
+access = "open"
+provider = "NVIDIA"
+model_id = "nvidia/parakeet-tdt-0.6b-v3"
+reproducibility = "mutable_checkpoint"
+language_policy = "explicit"
+languages = ["en", "es", "fr", "de", "it", "pt", "ru"]
+channels = ["ch1", "ch2", "mono"]
+transcribes = true
+diarizes = false
+credentials = []
+
+[parameters]
+runtime = "nemo_toolkit[asr]==2.5.3"
+gpu = "A100"
+language_hint = false
+word_timestamps = true
+segment_timestamps = true

@@ -1,0 +1,20 @@
+schema_version = 1
+catalog_version = "dai-asr-i18n-model-configs-v2"
+model_keys = [
+  "mai_transcribe",
+  "gemini_transcribe",
+  "meta_muse",
+  "xai_stt",
+  "openai_diarize",
+  "openai_transcribe",
+  "voxtral_transcribe",
+  "voxtral_small",
+  "whisper",
+  "qwen_asr",
+  "nemotron35_asr",
+  "parakeet",
+  "nemotron3_diarize",
+  "sortformer4v21_diarize",
+  "pyannote_diarize",
+  "diarizen",
+]

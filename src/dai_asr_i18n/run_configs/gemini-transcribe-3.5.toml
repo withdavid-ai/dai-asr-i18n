@@ -1,0 +1,17 @@
+# Executable inference run profile.
+schema_version = 1
+name = "gemini-transcribe-3.5-v1"
+channels = ["ch1", "ch2", "mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "gemini-transcribe"
+model_id = "gemini-3.5-transcribe"
+environment = ["GEMINI_API_KEY"]
+transcribes = true
+diarizes = true
+
+[model.options]
+mode = "verbatim"
+diarization_mode = "speaker"
+timestamp_granularities = ["word"]

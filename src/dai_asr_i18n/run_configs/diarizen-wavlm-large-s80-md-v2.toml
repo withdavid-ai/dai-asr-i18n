@@ -1,0 +1,21 @@
+# Executable inference run profile.
+schema_version = 1
+name = "diarizen-wavlm-large-s80-md-v2-v1"
+channels = ["mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "diarizen"
+model_id = "BUT-FIT/diarizen-wavlm-large-s80-md-v2"
+revision = "027b3e221b9d81dce2be794084f1dbd3ba2da403"
+device = "cuda"
+compute_type = "float32"
+authenticated = false
+environment = []
+transcribes = false
+diarizes = true
+
+[model.options]
+pipeline = "huggingface_default"
+max_speakers_per_chunk = 4
+weights_license = "CC-BY-NC-4.0"

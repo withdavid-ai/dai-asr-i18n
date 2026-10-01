@@ -1,0 +1,25 @@
+schema_version = 1
+key = "openai_diarize"
+display_name = "gpt-4o-transcribe-diarize"
+task = "asr_diarization"
+execution = "hosted_api"
+access = "proprietary"
+provider = "OpenAI"
+model_id = "gpt-4o-transcribe-diarize"
+reproducibility = "provider_managed"
+language_policy = "attempt_all"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "zh", "id", "tl", "th", "bn", "mr", "te", "ta"]
+channels = ["ch1", "ch2", "mono"]
+transcribes = true
+diarizes = true
+credentials = ["OPENAI_API_KEY"]
+
+[parameters]
+endpoint = "https://api.openai.com/v1/audio/transcriptions"
+response_format = "diarized_json"
+chunking_strategy = "auto"
+language_hint = true
+upload_codec = "mp3"
+upload_sample_rate_hz = 16000
+upload_channels = 1
+upload_bitrate = "128k"

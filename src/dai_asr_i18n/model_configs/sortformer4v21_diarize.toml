@@ -1,0 +1,32 @@
+schema_version = 1
+key = "sortformer4v21_diarize"
+display_name = "NVIDIA Sortformer 4spk-v2.1"
+task = "diarization"
+execution = "local"
+access = "open"
+provider = "NVIDIA"
+model_id = "nvidia/diar_streaming_sortformer_4spk-v2.1"
+reproducibility = "mutable_checkpoint"
+language_policy = "language_independent"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "zh", "id", "tl", "th", "bn", "mr", "te", "ta"]
+channels = ["mono"]
+transcribes = false
+diarizes = true
+credentials = []
+
+[parameters]
+runtime = "NVIDIA-NeMo/Speech@00278b0bd95bb2b8174b88012aa21b003c59d2e9"
+gpu = "A100"
+precision = "float32"
+profile = "offline"
+max_speakers = 4
+batch_size = 1
+postprocessing = "nemo_default"
+
+[parameters.streaming]
+spkcache_len = 188
+fifo_len = 40
+chunk_len = 340
+chunk_left_context = 1
+chunk_right_context = 40
+spkcache_update_period = 300

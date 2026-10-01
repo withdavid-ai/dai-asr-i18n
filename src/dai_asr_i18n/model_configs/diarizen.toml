@@ -1,0 +1,19 @@
+schema_version = 1
+key = "diarizen"
+display_name = "DiariZen WavLM large s80 md-v2"
+task = "diarization"
+execution = "local"
+access = "open"
+provider = "BUT-FIT"
+model_id = "BUT-FIT/diarizen-wavlm-large-s80-md-v2"
+reproducibility = "mutable_checkpoint"
+language_policy = "language_independent"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "zh", "id", "tl", "th", "bn", "mr", "te", "ta"]
+channels = ["mono"]
+transcribes = false
+diarizes = true
+credentials = []
+
+[parameters]
+pipeline = "huggingface_default"
+hugging_face_gated = false

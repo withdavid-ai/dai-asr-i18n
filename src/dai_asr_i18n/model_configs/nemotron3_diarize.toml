@@ -1,0 +1,34 @@
+schema_version = 1
+key = "nemotron3_diarize"
+display_name = "NVIDIA Nemotron-3-Diarization"
+task = "diarization"
+execution = "local"
+access = "open"
+provider = "NVIDIA"
+model_id = "nvidia/Nemotron-3-Diarization"
+model_revision = "f667ed73aee57d40cc39428eb768b4fd87a0a29e"
+reproducibility = "pinned"
+language_policy = "language_independent"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "zh", "id", "tl", "th", "bn", "mr", "te", "ta"]
+channels = ["mono"]
+transcribes = false
+diarizes = true
+credentials = []
+
+[parameters]
+runtime = "NVIDIA-NeMo/Speech@00278b0bd95bb2b8174b88012aa21b003c59d2e9"
+gpu = "A100"
+precision = "float32"
+profile = "offline"
+max_speakers = 8
+batch_size = 1
+postprocessing = "nemo_default"
+license = "OpenMDW-1.1"
+
+[parameters.streaming]
+spkcache_len = 264
+fifo_len = 40
+chunk_len = 340
+chunk_left_context = 1
+chunk_right_context = 40
+spkcache_update_period = 300

@@ -1,0 +1,22 @@
+schema_version = 1
+key = "gemini_transcribe"
+display_name = "Gemini 3.5 Transcribe"
+task = "asr_diarization"
+execution = "hosted_api"
+access = "proprietary"
+provider = "Google DeepMind"
+model_id = "gemini-3.5-transcribe"
+reproducibility = "provider_managed"
+language_policy = "explicit"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "zh", "id", "tl", "th", "bn", "mr", "te"]
+channels = ["ch1", "ch2", "mono"]
+transcribes = true
+diarizes = true
+credentials = ["GEMINI_API_KEY"]
+
+[parameters]
+endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions"
+mode = "verbatim"
+diarization_mode = "speaker"
+timestamp_granularities = ["word"]
+language_hint = true

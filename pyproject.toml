@@ -1,0 +1,113 @@
+[build-system]
+requires = ["hatchling>=1.27,<1.32"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dai-asr-i18n"
+version = "0.5.0"
+description = "Reproducible multilingual automatic speech recognition benchmarking"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "David AI" }]
+license = { file = "LICENSE" }
+keywords = ["asr", "benchmark", "speech-recognition", "wer", "cer"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "indic-nlp-library==0.92",
+  "jiwer==4.0.0",
+  "more-itertools==11.1.0",
+  "opencc==1.4.2",
+  "rapidfuzz==3.14.6",
+  "regex==2026.6.28",
+  "whisper-normalizer==0.1.12",
+]
+
+[project.optional-dependencies]
+audio = [
+  "librosa==0.11.0",
+  "numpy==2.4.6",
+  "soundfile==0.14.0",
+  "soxr==1.1.0",
+]
+hf = [
+  "huggingface-hub==1.33.0",
+  "pyarrow>=18,<24",
+  "soundfile==0.14.0",
+]
+hosted = [
+  "google-genai==2.23.0",
+  "httpx==0.28.1",
+]
+local = [
+  "av==18.1.0",
+  "ctranslate2==4.8.2",
+  "faster-whisper==1.2.1",
+  "huggingface-hub==1.33.0",
+  "librosa==0.11.0",
+  "numpy==2.4.6",
+  "soundfile==0.14.0",
+  "soxr==1.1.0",
+  "tokenizers==0.23.2",
+]
+modal = [
+  "modal==1.6.0",
+]
+speaker = [
+  "numpy==2.4.6",
+  "scipy==1.17.1; python_version < '3.12'",
+  "scipy==1.18.0; python_version >= '3.12'",
+]
+
+[project.scripts]
+dai-asr-i18n = "dai_asr_i18n.cli:main"
+
+[project.urls]
+Repository = "https://github.com/withdavid-ai/dai-asr-i18n"
+Issues = "https://github.com/withdavid-ai/dai-asr-i18n/issues"
+
+[dependency-groups]
+dev = [
+  "huggingface-hub==1.33.0",
+  "build>=1.2,<2",
+  "huggingface-hub==1.33.0",
+  "librosa==0.11.0",
+  "numpy==2.4.6",
+  "pytest>=8,<10",
+  "ruff>=0.11,<1",
+  "scipy==1.17.1; python_version < '3.12'",
+  "scipy==1.18.0; python_version >= '3.12'",
+  "soundfile==0.14.0",
+  "soxr==1.1.0",
+  "twine>=6,<7",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dai_asr_i18n"]
+
+[tool.hatch.build]
+exclude = ["/reviews"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.format]
+docstring-code-format = true

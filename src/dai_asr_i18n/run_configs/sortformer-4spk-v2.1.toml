@@ -1,0 +1,30 @@
+# Executable inference run profile.
+schema_version = 1
+name = "sortformer-4spk-v2.1-v1"
+channels = ["mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "nemo-sortformer"
+model_id = "nvidia/diar_streaming_sortformer_4spk-v2.1"
+revision = "cd03eee90fbec18297ac31b8c21546e596b7f71c"
+device = "cuda"
+compute_type = "float32"
+authenticated = false
+environment = []
+transcribes = false
+diarizes = true
+
+[model.options]
+profile = "offline"
+max_speakers = 4
+batch_size = 1
+postprocessing = "nemo_default"
+
+[model.options.streaming]
+spkcache_len = 188
+fifo_len = 40
+chunk_len = 340
+chunk_left_context = 1
+chunk_right_context = 40
+spkcache_update_period = 300

@@ -1,0 +1,21 @@
+# Executable inference run profile.
+schema_version = 1
+name = "qwen3-asr-1.7b-v1"
+channels = ["ch1", "ch2", "mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "qwen3-asr"
+model_id = "Qwen/Qwen3-ASR-1.7B"
+revision = "7278e1e70fe206f11671096ffdd38061171dd6e5"
+device = "cuda:0"
+compute_type = "bfloat16"
+environment = []
+transcribes = true
+diarizes = false
+
+[model.options]
+max_new_tokens = 2048
+language_hint = false
+max_input_s = 120.0
+window_target_factor = 0.98

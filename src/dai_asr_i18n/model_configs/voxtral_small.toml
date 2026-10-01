@@ -1,0 +1,19 @@
+schema_version = 1
+key = "voxtral_small"
+display_name = "Voxtral Small"
+task = "asr"
+execution = "hosted_api"
+access = "open"
+provider = "Mistral"
+model_id = "voxtral-small-2507"
+reproducibility = "provider_managed"
+language_policy = "unspecified"
+languages = []
+channels = ["ch1", "ch2", "mono"]
+transcribes = true
+diarizes = false
+credentials = ["MISTRAL_API_KEY"]
+
+[parameters]
+endpoint = "https://api.mistral.ai/v1/audio/transcriptions"
+language_hint = false

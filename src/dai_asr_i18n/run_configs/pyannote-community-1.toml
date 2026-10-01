@@ -1,0 +1,21 @@
+# Executable inference run profile.
+schema_version = 1
+name = "pyannote-community-1-v1"
+channels = ["mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "pyannote"
+model_id = "pyannote/speaker-diarization-community-1"
+revision = "3533c8cf8e369892e6b79ff1bf80f7b0286a54ee"
+device = "cuda"
+compute_type = "float32"
+authenticated = true
+environment = ["HF_TOKEN"]
+transcribes = false
+diarizes = true
+
+[model.options]
+pipeline = "speaker_diarization"
+exclusive_diarization = false
+oracle_speaker_count = false

@@ -1,0 +1,23 @@
+schema_version = 1
+key = "mai_transcribe"
+display_name = "MAI-Transcribe-2"
+task = "asr_diarization"
+execution = "hosted_api"
+access = "proprietary"
+provider = "Microsoft AI"
+model_id = "MAI-Transcribe-2"
+reproducibility = "provider_managed"
+language_policy = "explicit"
+languages = ["en", "es", "ar", "fr", "de", "hi", "it", "ja", "ko", "pt", "tr", "vi", "ru", "zh", "id", "tl", "th", "bn", "mr", "te", "ta"]
+channels = ["ch1", "ch2", "mono"]
+transcribes = true
+diarizes = true
+credentials = ["AZURE_SPEECH_KEY", "AZURE_SPEECH_ENDPOINT"]
+
+[parameters]
+api_version = "2025-10-15"
+enhanced_mode = true
+transcribe_style = "verbatim"
+timestamps = "word"
+diarization = true
+language_hint = true

@@ -1,0 +1,20 @@
+# Executable inference run profile.
+schema_version = 1
+name = "deepgram-nova-3-v1"
+channels = ["ch1", "ch2", "mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "deepgram"
+model_id = "nova-3"
+environment = ["DEEPGRAM_API_KEY"]
+transcribes = true
+diarizes = true
+
+[model.options]
+smart_format = true
+diarize_model = "latest"
+paragraphs = true
+utterances = true
+filler_words = true
+mip_opt_out = true

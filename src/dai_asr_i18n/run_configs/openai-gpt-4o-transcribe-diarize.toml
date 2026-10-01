@@ -1,0 +1,17 @@
+# Executable inference run profile.
+schema_version = 1
+name = "openai-gpt-4o-transcribe-diarize-v1"
+channels = ["mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "openai-transcription"
+model_id = "gpt-4o-transcribe-diarize"
+environment = ["OPENAI_API_KEY"]
+transcribes = true
+diarizes = true
+
+[model.options]
+response_format = "diarized_json"
+chunking_strategy = "auto"
+upload_bitrate = "128k"
