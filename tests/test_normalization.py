@@ -268,13 +268,13 @@ def test_unknown_profile_is_rejected_instead_of_silently_falling_back():
 def test_manifest_versions_normalization_scoring_and_implementation():
     manifest = normalization_manifest(include_opencc_hashes=False)
     assert manifest["policy"] == "dai-asr-i18n-normalization-v9"
-    assert manifest["scoring_policy"] == "dai-asr-i18n-offline-scoring-v2"
+    assert manifest["scoring_policy"] == "dai-asr-i18n-offline-scoring-v3"
     assert manifest["metric_policy"]["version"] == "benchmark-primary-v1"
     assert manifest["metric_policy"]["public_metric"]["zh"] == "cer"
     assert manifest["diarization_policy"] == {
-        "der": "dai-asr-i18n-der-v8",
-        "jer": "dai-asr-i18n-jer-v2",
-        "speaker_count": "dai-asr-i18n-speaker-count-v3",
+        "der": "dai-asr-i18n-der-v9",
+        "jer": "dai-asr-i18n-jer-v3",
+        "speaker_count": "dai-asr-i18n-speaker-count-v4",
     }
     assert len(manifest["dai_asr_i18n"]["policy_implementation_sha256"]) == 64
     assert manifest["packages"]["more-itertools"] == "11.1.0"

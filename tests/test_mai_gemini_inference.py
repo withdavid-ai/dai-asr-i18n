@@ -139,3 +139,170 @@ def test_gemini_backend_parses_speaker_words_and_cleans_up_upload(tmp_path: Path
     assert transcript.text_by_speaker() == {"A": "hello", "B": "world"}
     assert deleted == ["files/1"]
     assert "secret" not in str(transcript.metadata)
+
+
+@pytest.mark.parametrize("partial", [False, True])
+@pytest.mark.parametrize("missing_words", [None, []])
+def test_mai_marks_missing_word_annotations_without_losing_phrase_text(tmp_path, monkeypatch, partial, missing_words):
+    audio = tmp_path / "audio.flac"
+    audio.write_bytes(b"audio")
+    phrases = [
+        {"speaker": 2, "text": "world", "offsetMilliseconds": 500, "durationMilliseconds": 500, "words": missing_words}
+    ]
+    if partial:
+        phrases.insert(
+            0,
+            {
+                "speaker": 1,
+                "text": "hello",
+                "offsetMilliseconds": 0,
+                "durationMilliseconds": 500,
+                "words": [{"text": "hello", "offsetMilliseconds": 0, "durationMilliseconds": 500}],
+            },
+        )
+    raw = {"phrases": phrases, "combinedPhrases": []}
+    monkeypatch.setattr(
+        "dai_asr_i18n.inference.backends.mai.require_httpx",
+        lambda: SimpleNamespace(post=lambda *a, **kw: Response(raw)),
+    )
+    monkeypatch.setattr("dai_asr_i18n.inference.backends.hosted.require_httpx", lambda: SimpleNamespace())
+    backend = MaiTranscribeBackend(
+        load_run_config("mai-transcribe-2").model,
+        credentials={
+            "AZURE_SPEECH_KEY": "secret",
+            "AZURE_SPEECH_ENDPOINT": "https://example.cognitiveservices.azure.com",
+        },
+    )
+    transcript = backend.transcribe(audio, language="en")
+    assert transcript.metadata["word_alignment_complete"] is False
+    assert transcript.text_by_speaker() == ({"1": "hello", "2": "world"} if partial else {"2": "world"})
+    assert transcript.text == ("hello world" if partial else "world")
+    assert transcript.metadata["response"] == raw
+
+
+@pytest.mark.parametrize(
+    "text,words,valid",
+    [(None, None, True), ("", [], True), (123, [], False), ("word", {}, False), ("word", "word", False)],
+)
+def test_mai_empty_and_malformed_phrases(tmp_path, monkeypatch, text, words, valid):
+    audio = tmp_path / "audio.flac"
+    audio.write_bytes(b"audio")
+    raw = {
+        "phrases": [
+            {"text": text, "words": words, "speaker": 1, "offsetMilliseconds": 0, "durationMilliseconds": 1000}
+        ],
+        "combinedPhrases": [],
+    }
+    monkeypatch.setattr(
+        "dai_asr_i18n.inference.backends.mai.require_httpx",
+        lambda: SimpleNamespace(post=lambda *a, **kw: Response(raw)),
+    )
+    monkeypatch.setattr("dai_asr_i18n.inference.backends.hosted.require_httpx", lambda: SimpleNamespace())
+    backend = MaiTranscribeBackend(
+        load_run_config("mai-transcribe-2").model,
+        credentials={
+            "AZURE_SPEECH_KEY": "secret",
+            "AZURE_SPEECH_ENDPOINT": "https://example.cognitiveservices.azure.com",
+        },
+    )
+    if not valid:
+        with pytest.raises(ValueError, match="word list"):
+            backend.transcribe(audio, language="en")
+    else:
+        transcript = backend.transcribe(audio, language="en")
+        assert not transcript.text and not transcript.segments
+        assert "word_alignment_complete" not in transcript.metadata
+        assert transcript.metadata["response"] == raw
+
+
+@pytest.mark.parametrize(
+    "case,complete,expected",
+    [
+        ("truncated", False, {"1": "hello world"}),
+        ("blank_word", False, {"1": "hello"}),
+        ("empty_phrase", True, {"1": "hello"}),
+        ("case", True, {"1": "Hello!"}),
+        ("same_speaker_boundary", True, {"1": "hello world"}),
+        ("different_speaker_boundary", False, {"1": "hello", "2": "world"}),
+    ],
+)
+def test_mai_validates_complete_speaker_streams(tmp_path, monkeypatch, case, complete, expected):
+    from copy import deepcopy
+
+    from dai_asr_i18n.evaluation.connector import _blob
+    from dai_asr_i18n.evaluation.hypotheses import hypothesis_timeline
+
+    text, word_texts = {
+        "truncated": ("hello world", ["hello"]),
+        "blank_word": ("hello", [""]),
+        "empty_phrase": ("", ["hello"]),
+        "case": ("Hello!", ["hello"]),
+    }.get(case, ("hello", ["hello world"]))
+    phrases = [
+        {
+            "text": text,
+            "speaker": 1,
+            "offsetMilliseconds": 0,
+            "durationMilliseconds": 1000,
+            "words": [
+                {"text": t, "offsetMilliseconds": i * 100, "durationMilliseconds": 100}
+                for i, t in enumerate(word_texts)
+            ],
+        }
+    ]
+    if case.endswith("boundary"):
+        phrases.append(
+            {
+                "text": "world",
+                "speaker": 1 if case.startswith("same") else 2,
+                "offsetMilliseconds": 1000,
+                "durationMilliseconds": 1000,
+                "words": [],
+            }
+        )
+    raw = {"phrases": phrases, "combinedPhrases": []}
+    original = deepcopy(raw)
+    audio = tmp_path / "audio.flac"
+    audio.write_bytes(b"audio")
+    monkeypatch.setattr(
+        "dai_asr_i18n.inference.backends.mai.require_httpx",
+        lambda: SimpleNamespace(post=lambda *a, **kw: Response(raw)),
+    )
+    monkeypatch.setattr("dai_asr_i18n.inference.backends.hosted.require_httpx", lambda: SimpleNamespace())
+    backend = MaiTranscribeBackend(
+        load_run_config("mai-transcribe-2").model,
+        credentials={
+            "AZURE_SPEECH_KEY": "secret",
+            "AZURE_SPEECH_ENDPOINT": "https://example.cognitiveservices.azure.com",
+        },
+    )
+    transcript = backend.transcribe(audio, language="en")
+    assert transcript.text_by_speaker() == expected
+    assert (transcript.metadata.get("word_alignment_complete") is not False) == complete
+    blob = _blob(transcript, diarizes=True, word_activity=True, check_word_coverage=True)
+    if complete:
+        assert hypothesis_timeline(blob)
+    else:
+        with pytest.raises(ValueError, match="incomplete"):
+            hypothesis_timeline(blob)
+    assert raw == original == transcript.metadata["response"]
+
+
+@pytest.mark.parametrize(
+    "left,right,complete",
+    [
+        ("Hello!", "hello", True),
+        ("cafe\u0301", "café", True),
+        ("STRASSE", "Straße", True),
+        ("Ａ", "A", False),
+        ("one", "1", False),
+        ("a\u0301", "a", False),
+        ("$1", "£1", False),
+        ("漢", "汉", False),
+        ("1", "2", False),
+    ],
+)
+def test_coverage_comparison_does_not_apply_scoring_normalization(left, right, complete):
+    from dai_asr_i18n.inference.word_coverage import word_text_coverage_complete
+
+    assert word_text_coverage_complete([("A", left)], [("A", right)]) == complete

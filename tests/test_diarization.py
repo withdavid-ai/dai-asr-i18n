@@ -24,7 +24,7 @@ def test_der_decomposes_miss_false_alarm_and_confusion_exactly():
     reference = [("A", 0.0, 1.0), ("B", 1.0, 2.0)]
     hypothesis = [("X", 0.0, 1.5)]
     score = der(reference, hypothesis)
-    assert score.policy == DER_POLICY_VERSION == "dai-asr-i18n-der-v8"
+    assert score.policy == DER_POLICY_VERSION == "dai-asr-i18n-der-v9"
     assert score.assignment_objective == "maximum_correct_speaker_time"
     assert score.same_speaker_support == "union_touching_and_overlapping"
     assert score.zero_reference_policy == "undefined_rate_retain_primitives"
@@ -91,7 +91,7 @@ def test_zero_reference_rate_is_json_null_but_false_alarm_is_retained():
 def test_jer_is_speaker_balanced_and_uses_jaccard_assignment():
     balanced = jer([("long", 0.0, 99.0), ("short", 99.0, 100.0)], [("H", 0.0, 99.0)])
     partial = jer([("A", 0.0, 2.0)], [("H", 1.0, 3.0)])
-    assert balanced.policy == JER_POLICY_VERSION == "dai-asr-i18n-jer-v2"
+    assert balanced.policy == JER_POLICY_VERSION == "dai-asr-i18n-jer-v3"
     assert balanced.assignment_objective == "minimum_jaccard_error"
     assert balanced.collar_s == 0
     assert balanced.overlap == "include"
@@ -113,7 +113,7 @@ def test_speaker_count_uses_active_timeline_labels():
         [("A", 0.0, 1.0), ("B", 1.0, 2.0)],
         [("X", 0.0, 2.0), ("unused", 2.0, 2.0)],
     )
-    assert score.policy == SPEAKER_COUNT_POLICY_VERSION == "dai-asr-i18n-speaker-count-v3"
+    assert score.policy == SPEAKER_COUNT_POLICY_VERSION == "dai-asr-i18n-speaker-count-v4"
     assert not score.correct
     assert score.accuracy == 0
     assert score.absolute_error == 1

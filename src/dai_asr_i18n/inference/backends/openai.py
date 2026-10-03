@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
 import math
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 
 from dai_asr_i18n.inference.backends.hosted import HostedBackend, checked_request, require_httpx
@@ -14,43 +17,80 @@ from dai_asr_i18n.inference.config import ModelConfig
 ENDPOINT = "https://api.openai.com/v1/audio/transcriptions"
 _OPTIONS = {"response_format", "chunking_strategy", "temperature", "upload_bitrate"}
 _REQUEST_LIMIT_BYTES = 25 * 1024 * 1024
+AUDIO_ENCODING_PROTOCOL = "openai-file-mp3-gapless-v2"
+LANGUAGE_HINT_PROTOCOL = "openai-gpt-languages-v1"
+
+
+def _encoding_contract(bitrate: str) -> dict[str, object]:
+    return {
+        "protocol": AUDIO_ENCODING_PROTOCOL,
+        "codec": "mp3",
+        "sample_rate_hz": 16000,
+        "bitrate": bitrate,
+        "gapless_metadata": True,
+    }
+
+
+def _decoded_duration(audio: bytes) -> float | None:
+    try:
+        import soundfile as sf
+    except ImportError:
+        return None
+    try:
+        return float(sf.info(io.BytesIO(audio)).duration)
+    except sf.LibsndfileError:
+        return None
 
 
 def _mp3(audio_path: Path, bitrate: str) -> bytes:
+    """Use seekable output so ffmpeg finalizes encoder-delay/padding metadata."""
     try:
-        process = subprocess.run(
-            [
-                "ffmpeg",
-                "-hide_banner",
-                "-loglevel",
-                "error",
-                "-i",
-                str(audio_path),
-                "-ac",
-                "1",
-                "-ar",
-                "16000",
-                "-b:a",
-                bitrate,
-                "-f",
-                "mp3",
-                "pipe:1",
-            ],
-            capture_output=True,
-            timeout=600,
-            check=False,
-        )
+        with tempfile.TemporaryDirectory(prefix="dai-asr-openai-audio-") as directory:
+            output = Path(directory) / "audio.mp3"
+            process = subprocess.run(
+                [
+                    "ffmpeg",
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-i",
+                    str(audio_path),
+                    "-ac",
+                    "1",
+                    "-ar",
+                    "16000",
+                    "-b:a",
+                    bitrate,
+                    "-f",
+                    "mp3",
+                    "-write_xing",
+                    "1",
+                    str(output),
+                ],
+                capture_output=True,
+                timeout=600,
+                check=False,
+            )
+            if process.returncode or not output.is_file() or not output.stat().st_size:
+                raise ValueError(f"ffmpeg failed to prepare the OpenAI upload (exit {process.returncode})")
+            audio = output.read_bytes()
     except (OSError, subprocess.SubprocessError) as error:
         raise ValueError(f"ffmpeg could not prepare the OpenAI upload: {error}") from error
-    if process.returncode or not process.stdout:
-        raise ValueError(f"ffmpeg failed to prepare the OpenAI upload (exit {process.returncode})")
-    if len(process.stdout) > _REQUEST_LIMIT_BYTES:
+    if len(audio) > _REQUEST_LIMIT_BYTES:
         raise ValueError("prepared OpenAI upload exceeds the 25 MB request limit")
-    return process.stdout
+    return audio
 
 
 class OpenAITranscriptionBackend(HostedBackend):
     provider = "OpenAI"
+
+    @property
+    def identity(self) -> dict[str, object]:
+        return {
+            **super().identity,
+            "audio_encoding": _encoding_contract(str(self.config.options.get("upload_bitrate", "128k"))),
+            "language_hint_protocol": LANGUAGE_HINT_PROTOCOL,
+        }
 
     def __init__(self, config: ModelConfig, *, credentials: dict[str, str] | None = None) -> None:
         super().__init__(config, credentials=credentials)
@@ -83,10 +123,24 @@ class OpenAITranscriptionBackend(HostedBackend):
         httpx = require_httpx()
         bitrate = str(self.config.options.get("upload_bitrate", "128k"))
         audio = _mp3(audio_path, bitrate)
+        source = audio_path.read_bytes()
+        encoding = {
+            **_encoding_contract(bitrate),
+            "source_sha256": hashlib.sha256(source).hexdigest(),
+            "source_duration_s": _decoded_duration(source),
+            "submitted_sha256": hashlib.sha256(audio).hexdigest(),
+            "submitted_bytes": len(audio),
+            "submitted_decoded_duration_s": _decoded_duration(audio),
+        }
         parameters = {"model": self.config.model_id}
         parameters.update({key: value for key, value in self.config.options.items() if key != "upload_bitrate"})
         if language:
-            parameters["language"] = language.split("-")[0].lower()
+            hint = language.replace("_", "-").lower()
+            primary = hint.split("-")[0]
+            if self.config.model_id == "gpt-transcribe":
+                parameters["languages[]"] = ["zh-cn" if hint == "zh-cn" else primary]
+            else:
+                parameters["language"] = primary
         response = checked_request(
             lambda: httpx.post(
                 ENDPOINT,
@@ -104,7 +158,7 @@ class OpenAITranscriptionBackend(HostedBackend):
                     "request": {
                         "endpoint": ENDPOINT,
                         "parameters": parameters,
-                        "input": {"codec": "mp3", "sample_rate_hz": 16000, "bitrate": bitrate},
+                        "input": encoding,
                     }
                 },
             )
@@ -158,7 +212,7 @@ class OpenAITranscriptionBackend(HostedBackend):
                 "request": {
                     "endpoint": ENDPOINT,
                     "parameters": parameters,
-                    "input": {"codec": "mp3", "sample_rate_hz": 16000, "bitrate": bitrate},
+                    "input": encoding,
                 }
             },
         )
