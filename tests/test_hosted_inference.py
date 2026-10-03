@@ -199,6 +199,8 @@ def test_openai_backend_parses_diarized_segments(tmp_path: Path, monkeypatch: py
 
     assert transcript.text_by_speaker() == {"A": "hello", "B": "world"}
     assert transcript.timed_speaker_segments()[1]["speaker"] == "B"
+    assert transcript.metadata["request"]["parameters"]["language"] == "en"
+    assert "languages[]" not in transcript.metadata["request"]["parameters"]
 
 
 def test_openai_rejects_nonempty_diarized_text_without_segments(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

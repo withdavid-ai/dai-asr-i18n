@@ -206,8 +206,8 @@ def test_preflight_is_read_only_and_runner_resumes(tmp_path: Path):
     assert rows[0]["reference"] in {"hello", "world"}
     for row in rows:
         expected_activity = {
-            "ch1": [{"speaker": "ch1", "start_s": 0.0, "end_s": 0.005}],
-            "ch2": [{"speaker": "ch2", "start_s": 0.005, "end_s": 0.01}],
+            "ch1": [{"speaker": "ch1", "start_s": 0.001, "end_s": 0.004}],
+            "ch2": [{"speaker": "ch2", "start_s": 0.006, "end_s": 0.009}],
         }
         assert row["reference_diarization"] == expected_activity[row["channel"]]
 
@@ -395,7 +395,7 @@ def test_mono_resume_rebuilds_a_tampered_unpublished_mix(tmp_path: Path):
     assert backend.calls == [("mono.wav", "en-us")]
 
 
-def test_word_alignments_drive_word_timing_and_outer_diarization_intervals(tmp_path: Path):
+def test_word_alignments_drive_word_timing_and_scored_diarization_intervals(tmp_path: Path):
     dataset = _dataset(tmp_path / "dataset")
     config = replace(load_run_config("whisper-large-v3-portable"), channels=("mono",))
 
@@ -419,8 +419,8 @@ def test_word_alignments_drive_word_timing_and_outer_diarization_intervals(tmp_p
         },
     ]
     assert hypothesis["reference_diarization"] == [
-        {"speaker": "ch1", "start_s": 0.0, "end_s": 0.005},
-        {"speaker": "ch2", "start_s": 0.005, "end_s": 0.01},
+        {"speaker": "ch1", "start_s": 0.001, "end_s": 0.004},
+        {"speaker": "ch2", "start_s": 0.006, "end_s": 0.009},
     ]
 
 

@@ -2,10 +2,10 @@
 
 NORMALIZATION_POLICY_ID = "dai-asr-i18n-normalization-v9"
 METRIC_POLICY_VERSION = "benchmark-primary-v1"
-SCORING_POLICY_VERSION = "dai-asr-i18n-offline-scoring-v2"
-DER_POLICY_VERSION = "dai-asr-i18n-der-v8"
-JER_POLICY_VERSION = "dai-asr-i18n-jer-v2"
-SPEAKER_COUNT_POLICY_VERSION = "dai-asr-i18n-speaker-count-v3"
+SCORING_POLICY_VERSION = "dai-asr-i18n-offline-scoring-v3"
+DER_POLICY_VERSION = "dai-asr-i18n-der-v9"
+JER_POLICY_VERSION = "dai-asr-i18n-jer-v3"
+SPEAKER_COUNT_POLICY_VERSION = "dai-asr-i18n-speaker-count-v4"
 
 __all__ = [
     "DER_POLICY_VERSION",

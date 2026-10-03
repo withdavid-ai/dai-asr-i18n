@@ -162,17 +162,15 @@ def parse_response(raw: dict, language: str, *, require_speakers: bool = True) -
 
 
 def gemini_timeline(blob):
-    """Omit reversed provider words, splitting turns at each omission.
+    """Validate a legacy connector artifact and derive bounded native-word activity.
 
-    Successful strict timelines are returned verbatim. For malformed timelines,
-    require the original provider response to reproduce the stored word timings and
-    speaker-turn boundaries before deriving anything. No text or artifact is edited.
+    Original speaker-turn boundaries verify identity only; they do not define
+    speech activity. The fresh and direct scoring paths use the same 200 ms rule.
     """
+    from dai_asr_i18n.evaluation.activity import speaker_word_activity
 
-    try:
-        return _hyp_timeline(blob)
-    except (ValueError, TypeError):
-        pass
+    if not blob:
+        return []
     metadata = blob.get("provider_meta") or {}
     if len(metadata) != 1 or blob.get("physical_channel_blobs"):
         raise ValueError("Gemini timing policy requires one mixed-audio response")
@@ -193,20 +191,18 @@ def gemini_timeline(blob):
     actual = [(_speaker_label(s), s.get("start_ms"), s.get("end_ms")) for s in blob["verbatim"]["segments"]]
     if expected != actual:
         raise ValueError("Gemini raw/stored speaker timeline mismatch")
-    if not any(w["end"] < w["start"] for w in words):
-        raise ValueError("Gemini invalid timing is outside the reversed-word policy")
-    result, run = [], []
-
-    def flush():
-        result.extend(
-            (s.speaker_external_id, s.start_ms, s.end_ms) for s in _speaker_segments_from_words(run, int(channel))
-        )
-        run.clear()
-
-    for word in words:
-        if word["end"] < word["start"]:
-            flush()
-        else:
-            run.append(word)
-    flush()
-    return result
+    activity = speaker_word_activity(
+        {
+            "verbatim": blob["verbatim"],
+            "words": [
+                {
+                    "speaker_external_id": f"{channel}:{word['speaker']}",
+                    "start_ms": word["start"] * 1000,
+                    "end_ms": word["end"] * 1000,
+                }
+                for word in words
+            ],
+        },
+        omit_reversed_words=True,
+    )
+    return [(s.speaker, s.start_s * 1000, s.end_s * 1000) for s in activity]
