@@ -96,7 +96,10 @@ Replace the placeholder below with that full SHA and export it in your shell:
 export HF_DATASET_COMMIT="<FULL_40_CHARACTER_COMMIT_SHA>"
 ```
 
-This is the latest hash (`56c98bf17925b547a1f1bdfe25339f0a84caa74b`) for DAI-ASR-I18N dataset (09/30/2026).
+The existing dataset format is supported: `word_alignments` contain speaker IDs and
+aligned words with text, start and end times. A separate segment-level `text` field is
+not required. Local manifests remain schema version 2. Scoring uses the supplied
+reference timestamps as published; it does not rerun alignment or change the dataset.
 
 Keep this value fixed for the run. Then pull a language selection and run a built-in profile:
 
@@ -120,6 +123,13 @@ the same scoring framework. You’ll need your own API keys for hosted providers
 account if you use the Modal runners. The [run profiles](src/dai_asr_i18n/run_configs/)
 list each model’s required credential environment variables.
 
+OpenAI file uploads use 16 kHz mono MP3 with encoder-delay metadata, retaining the
+source clock. Request records include source/upload checksums and decoded durations.
+GPT-Transcribe receives `languages[]`, using `zh-cn` only for an explicit `zh-CN`
+dataset locale; other language hints use the primary language code. The diarizing
+OpenAI model uses its separate `language` parameter. Changed request protocols require
+a new run directory rather than resuming an incompatible run.
+
 Scoring runs automatically on the connector outputs, using the dataset's supplied aligned
 references. No published hypotheses or precomputed predictions are required.
 
@@ -133,7 +143,7 @@ diarization-only models receive only diarization scores.
 |---|---|
 | WER/CER (Vietnamese SER) | Normalized aligned-reference text; language-specific scoring units |
 | cpWER/cpCER/cpSER | Minimum-permutation speaker-attributed mixed-audio text |
-| DER, miss, false alarm, confusion | Aligned words merged across gaps ≤0.20 s; overlap included |
+| DER, miss, false alarm, confusion | Reference aligned words merged across gaps ≤0.20 s; overlap included |
 | JER | Same aligned speech regions; no collar |
 | Speaker-count accuracy / MAE | Speaker identities in the aligned references |
 
@@ -141,6 +151,21 @@ Default DER has no collar; `_c25` adds a ±0.25-second boundary collar. `_forced
 aligned-word speech regions. Rates are fractions; DER numerators/denominators use
 speaker-milliseconds. Primary units are CER for Mandarin/Japanese/Korean/Thai and WER
 elsewhere, with Vietnamese whitespace-delimited syllables reported as SER.
+
+For Scribe, MAI, Gemini and xAI, hypothesis activity comes from their native word
+timestamps: merge words from the same speaker only when the gap is ≤0.20 seconds.
+Zero-duration words add no activity and do not bridge gaps. Other models retain their
+native speaker segments. This affects DER, JER and speaker-count inputs only; transcript
+text and lexical scoring stay unchanged. Gemini words with reversed timestamps count as
+missing activity, with their text retained for transcript scoring; other invalid timing
+makes the diarization score unavailable.
+MAI's word annotations must cover each speaker's complete text in order. This validation
+allows NFC Unicode equivalence, casefolding, whitespace and punctuation differences;
+it preserves marks, symbols and digits and does not use the scoring normalizer.
+If MAI's phrase text and native words disagree, its speaker-labelled phrase text is
+still scored, but timing-dependent scores are unavailable. Empty phrase text uses only
+words actually supplied by MAI. Empty, wordless phrases add no speech activity. Native
+responses and word timestamps are retained unchanged.
 
 Failed requests remain in `failures.jsonl`; they are never substituted with empty predictions.
 Successful empty outputs are scored as deletions/missed speech. Scoring problems appear in

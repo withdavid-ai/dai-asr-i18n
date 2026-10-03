@@ -256,6 +256,24 @@ def _selected_tasks(
     )
 
 
+def _inference_language(clip: BenchmarkClip, config: RunConfig) -> str:
+    """Use an explicit dataset locale only for the GPT-Transcribe hint contract."""
+    if config.model.backend != "openai-transcription" or config.model.model_id != "gpt-transcribe":
+        return clip.language
+    locales = [clip.metadata[key] for key in ("locale", "benchmark_locale") if clip.metadata.get(key)]
+    normalized = []
+    for locale in locales:
+        if not isinstance(locale, str):
+            raise ValueError("dataset locale must be a language code string")
+        value = locale.replace("_", "-").lower()
+        if value.split("-")[0] != clip.language.replace("_", "-").lower().split("-")[0]:
+            raise ValueError("dataset locale conflicts with the clip language")
+        normalized.append(value)
+    if len(set(normalized)) > 1:
+        raise ValueError("dataset locale and benchmark_locale disagree")
+    return normalized[0] if normalized else clip.language
+
+
 def preflight_run(
     dataset_root: str | Path,
     config: RunConfig,
@@ -273,6 +291,10 @@ def preflight_run(
     missing_channel_tasks = 0
     clips = _selected_clips(verification.dataset, languages, sample_ids)
     for clip in clips:
+        from dai_asr_i18n.evaluation.connector import reference_from_clip
+
+        reference_from_clip(clip)
+        _inference_language(clip, config)
         channels = [
             channel
             for channel in config.channels
@@ -350,15 +372,20 @@ def _reference_timed(clip: BenchmarkClip, channel: str) -> list[dict[str, object
 
 
 def _reference_diarization(clip: BenchmarkClip, channel: str) -> list[dict[str, object]]:
-    """Return speaker activity from alignment-segment boundaries, not word extents."""
+    """Return the same merged aligned-word activity used by diarization scoring."""
 
     channels = tuple(sorted(clip.audio)) if channel == "mono" else (channel,)
     activity: list[dict[str, object]] = []
     for speaker in channels:
         alignments = clip.word_alignments.get(speaker, ())
         if alignments or speaker in clip.word_alignments:
+            from dai_asr_i18n.evaluation._reference_validation import merge_speech_intervals
+
             activity.extend(
-                {"speaker": speaker, "start_s": segment.start_s, "end_s": segment.end_s} for segment in alignments
+                {"speaker": speaker, "start_s": start, "end_s": end}
+                for start, end in merge_speech_intervals(
+                    [(word.start_s, word.end_s) for segment in alignments for word in segment.words]
+                )
             )
         elif speaker in clip.references:  # legacy schema-version 1 manifests
             activity.extend(
@@ -552,7 +579,7 @@ def run_inference(
                 skipped += 1
                 continue
             started = time.monotonic()
-            transcript = selected_backend.transcribe(audio_path, language=clip.language)
+            transcript = selected_backend.transcribe(audio_path, language=_inference_language(clip, config))
             elapsed_s = time.monotonic() - started
             hypothesis_by_speaker = transcript.text_by_speaker()
             if not hypothesis_by_speaker and channel != "mono":

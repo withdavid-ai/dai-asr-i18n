@@ -72,6 +72,42 @@ def test_all_reversed_words_score_as_standard_missing_speech():
     assert result.confusion_s == result.false_alarm_s == 0
 
 
+def test_direct_gemini_and_fresh_word_activity_use_same_bounded_timeline():
+    words = [
+        {"text": text, "type": "word_info", "speaker": "A", "start_offset": start, "end_offset": end}
+        for text, start, end in [("hello", 0.0, 1.0), ("again", 5.0, 6.0)]
+    ]
+    blob = {
+        "verbatim": {
+            "segments": [{"speaker_external_id": "1:A", "start_ms": 0.0, "end_ms": 6000.0, "text": "hello again"}]
+        },
+        "words": [{"start_ms": 0.0, "end_ms": 1000.0}, {"start_ms": 5000.0, "end_ms": 6000.0}],
+        "provider_meta": {
+            "1": {
+                "response": {
+                    "status": "completed",
+                    "steps": [
+                        {
+                            "type": "model_output",
+                            "content": [{"type": "text", "text": "hello again", "annotations": words}],
+                        }
+                    ],
+                }
+            }
+        },
+    }
+    before = deepcopy(blob)
+    direct = hypothesis_timeline(blob, provider="gemini_transcribe")
+    fresh = deepcopy(blob)
+    fresh["activity_source"] = "speaker_words"
+    for word in fresh["words"]:
+        word["speaker_external_id"] = "1:A"
+    assert direct == hypothesis_timeline(fresh, provider="gemini_transcribe")
+    assert [(s.start_s, s.end_s) for s in direct] == [(0.0, 1.0), (5.0, 6.0)]
+    assert blob == before
+    assert hypothesis_timeline({}, provider="gemini_transcribe") == ()
+
+
 @pytest.mark.parametrize("bad", ["raw", "stored", "missing_metadata", "incomplete", "segment", "dual"])
 def test_gemini_requires_verifiable_original_response(bad):
     b = deepcopy(FIXTURES["gemini"][1]["blob"])
@@ -128,3 +164,35 @@ def test_alignment_only_rejects_corrupt_words(bad):
         a["audioEnd"] = 0.01
     with pytest.raises(ValueError):
         reference_from_alignment(case["document"], channel_durations_s=case["durations"])
+
+
+@pytest.mark.parametrize("gap,merged", [(0.199, True), (0.2, True), (0.201, False)])
+def test_native_word_activity_threshold(gap, merged):
+    blob = {
+        "activity_source": "speaker_words",
+        "verbatim": {"segments": []},
+        "words": [
+            {"speaker_external_id": "A", "start_ms": (1 + gap) * 1000, "end_ms": 2000},
+            {"speaker_external_id": "A", "start_ms": 0, "end_ms": 1000},
+        ],
+    }
+    actual = hypothesis_timeline(blob)
+    assert len(actual) == (1 if merged else 2)
+
+
+@pytest.mark.parametrize("start,end", [(None, 1), (-1, 1), (float("nan"), 1), (float("inf"), 1), (2, 1)])
+def test_native_word_activity_invalid_timing_is_explicit(start, end):
+    blob = {
+        "activity_source": "speaker_words",
+        "verbatim": {"segments": []},
+        "words": [
+            {"speaker_external_id": "A", "start_ms": start, "end_ms": end},
+        ],
+    }
+    with pytest.raises(ValueError):
+        hypothesis_timeline(blob)
+    if start == 2:
+        assert hypothesis_timeline(blob, provider="gemini_transcribe") == ()
+    else:
+        with pytest.raises(ValueError):
+            hypothesis_timeline(blob, provider="gemini_transcribe")

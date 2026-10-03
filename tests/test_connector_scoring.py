@@ -106,3 +106,156 @@ def test_gemini_reversed_words_are_missing_activity_not_missing_text(tmp_path):
     assert result["metrics"]["cpwer"]["value"] == 0
     assert result["metrics"]["der_forced_miss"]["value"] == pytest.approx(0.5)
     assert result["unavailable"] == {}
+
+
+def test_schema_v2_reference_words_and_timestamps_are_unchanged(tmp_path):
+    from dai_asr_i18n.datasets.models import AlignedWord, WordAlignmentSegment
+
+    clip = load_selection(_dataset(tmp_path / "data")).clips[0]
+    aligned = WordAlignmentSegment(
+        0,
+        0.005,
+        "forced",
+        tuple(AlignedWord(text, 0.001, 0.004) for text in ("I", "can", "t", "go", "100")),
+    )
+    clip = replace(clip, word_alignments={**clip.word_alignments, "ch1": (aligned,)})
+    before = clip.to_dict()
+    assert before["schema_version"] == 2
+    assert "text" not in before["word_alignments"]["ch1"][0]
+    assert clip.reference_text("ch1") == "I can t go 100"
+    assert reference_from_clip(clip).text_by_speaker["1"] == "I can t go 100"
+    model = load_run_config("whisper-large-v3-portable").model
+    result = score_connector_output(clip, Transcript(text="I can t go 100"), "ch1", model)
+    assert result["metrics"]["wer"]["value"] == 0
+    assert clip.to_dict() == before
+
+
+@pytest.mark.parametrize(
+    "profile", ["elevenlabs-scribe-v2", "mai-transcribe-2", "gemini-transcribe-3.5", "xai-grok-voice-transcribe-2"]
+)
+def test_word_activity_is_separate_from_lexical_turns(tmp_path, profile):
+    from dai_asr_i18n.evaluation.connector import _blob
+    from dai_asr_i18n.evaluation.hypotheses import hypothesis_timeline
+
+    words = (
+        TranscriptWord("one", 0, 1, speaker="A"),
+        TranscriptWord("two", 5, 6, speaker="A"),
+        TranscriptWord("overlap", 0.5, 0.9, speaker="B"),
+        TranscriptWord("three", 6.2, 7, speaker="A"),
+        TranscriptWord("zero", 7.2, 7.2, speaker="A"),
+        TranscriptWord("four", 7.4, 8, speaker="A"),
+    )
+    transcript = Transcript(
+        text="one two overlap three zero four",
+        segments=(
+            TranscriptSegment(
+                "one two three zero four", 0, 8, words=tuple(w for w in words if w.speaker == "A"), speaker="A"
+            ),
+            TranscriptSegment("overlap", 0.5, 0.9, words=(words[2],), speaker="B"),
+        ),
+    )
+    blob = _blob(transcript, diarizes=True, word_activity=True)
+    assert [(s.speaker, s.start_s, s.end_s) for s in hypothesis_timeline(blob)] == [
+        ("A", 0, 1),
+        ("B", 0.5, 0.9),
+        ("A", 5, 7),
+        ("A", 7.4, 8),
+    ]
+    assert blob["verbatim"]["segments"][0]["text"] == "one two three zero four"
+    assert [(s.start_s, s.end_s) for s in hypothesis_timeline(_blob(transcript, diarizes=True))] == [(0, 8), (0.5, 0.9)]
+    model = load_run_config(profile).model
+    clip = load_selection(_dataset(tmp_path / "data")).clips[0]
+    # Both predictions are inside this synthetic clip but their enclosing turn contains a gap.
+    tiny = Transcript(
+        text="hello",
+        segments=(
+            TranscriptSegment(
+                "hello", 0, 0.01, speaker="A", words=(TranscriptWord("hello", 0.001, 0.004, speaker="A"),)
+            ),
+        ),
+    )
+    result = score_connector_output(clip, tiny, "mono", model)
+    assert result["metrics"]["der_forced_fa"]["numerator"] == 0
+
+
+def test_existing_manifest_runs_without_segment_text_or_schema_migration(tmp_path):
+    dataset = _dataset(tmp_path / "data")
+    path = dataset / "selection.jsonl"
+    row = json.loads(path.read_text())
+    assert row["schema_version"] == 2
+    assert all("text" not in segment for segments in row["word_alignments"].values() for segment in segments)
+    before = path.read_bytes()
+    backend = FakeBackend()
+    report = run_inference(
+        dataset,
+        replace(load_run_config("whisper-large-v3-portable"), channels=("ch1", "ch2")),
+        tmp_path / "run",
+        backend=backend,
+    )
+    assert report.completed == 2 and report.failed == 0
+    assert len(backend.calls) == 2
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("explicit_flag", [False, True])
+def test_partial_word_annotations_preserve_cpwer_and_make_der_unavailable(tmp_path, explicit_flag):
+    clip = load_selection(_dataset(tmp_path / "data")).clips[0]
+    transcript = Transcript(
+        text="hello world",
+        segments=(
+            TranscriptSegment(
+                "hello", 0.001, 0.004, speaker="A", words=(TranscriptWord("hello", 0.001, 0.004, speaker="A"),)
+            ),
+            TranscriptSegment("world", 0.006, 0.009, speaker="B"),
+        ),
+        metadata={"word_alignment_complete": False} if explicit_flag else {},
+    )
+    model = load_run_config("mai-transcribe-2").model
+    result = score_connector_output(clip, transcript, "mono", model)
+    assert result["metrics"]["cpwer"]["value"] == 0
+    assert "der_forced" not in result["metrics"]
+    assert any("incomplete" in str(reason) for reason in result["unavailable"].values())
+    empty = score_connector_output(clip, Transcript(text=""), "mono", model)
+    assert empty["metrics"]["der_forced"]["value"] == 1
+
+
+@pytest.mark.parametrize("profile", ["elevenlabs-scribe-v2", "gemini-transcribe-3.5", "xai-grok-voice-transcribe-2"])
+def test_mai_partial_text_guard_does_not_change_other_word_provider_scoring(tmp_path, profile):
+    clip = load_selection(_dataset(tmp_path / "data")).clips[0]
+    transcript = Transcript(
+        text="hello world",
+        segments=(
+            TranscriptSegment(
+                "hello world", 0.001, 0.009, speaker="A", words=(TranscriptWord("hello", 0.001, 0.004, speaker="A"),)
+            ),
+        ),
+    )
+    # This synthetic disagreement exercises scope only. Other adapters retain
+    # their existing text/timing validation policy; MAI gets the new stream check.
+    unchanged = score_connector_output(clip, transcript, "mono", load_run_config(profile).model)
+    guarded = score_connector_output(clip, transcript, "mono", load_run_config("mai-transcribe-2").model)
+    assert "der_forced" in unchanged["metrics"]
+    assert "der_forced" not in guarded["metrics"]
+    assert "cpwer" in guarded["metrics"]
+
+
+def test_fresh_runner_scores_existing_word_only_reference_after_manifest_roundtrip(tmp_path):
+    dataset = _dataset(tmp_path / "data")
+    path = dataset / "selection.jsonl"
+    row = json.loads(path.read_text())
+    row["word_alignments"]["ch1"][0]["words"] = [
+        {"text": text, "start_s": 0.001, "end_s": 0.004} for text in ("I", "can", "t", "go", "100")
+    ]
+    path.write_text(json.dumps(row) + "\n")
+
+    class ExactBackend(FakeBackend):
+        def transcribe(self, audio_path, *, language):
+            self.calls.append((audio_path.name, language))
+            return Transcript(text="I can t go 100")
+
+    backend = ExactBackend()
+    config = replace(load_run_config("whisper-large-v3-portable"), channels=("ch1",))
+    run_inference(dataset, config, tmp_path / "run", backend=backend)
+    scored = json.loads((tmp_path / "run/scores.jsonl").read_text())
+    assert scored["result"]["metrics"]["wer"]["value"] == 0
+    assert len(backend.calls) == 1

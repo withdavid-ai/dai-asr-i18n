@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from dai_asr_i18n.inference.backends.hosted import HostedBackend, checked_request, require_httpx
 from dai_asr_i18n.inference.base import Transcript, TranscriptSegment, TranscriptWord
 from dai_asr_i18n.inference.config import ModelConfig
+from dai_asr_i18n.inference.word_coverage import word_text_coverage_complete
 
 _OPTIONS = {"api_version", "transcribe_style", "timestamps"}
 _LANGUAGE_ALIASES = {"tl": "fil"}
@@ -95,8 +96,16 @@ class MaiTranscribeBackend(HostedBackend):
                 raise ValueError("MAI diarization response lacks speaker labels")
             start, end = _interval(phrase)
             speaker = str(phrase["speaker"])
+            phrase_text = "" if phrase.get("text") is None else phrase["text"]
+            phrase_words = phrase.get("words")
+            if not isinstance(phrase_text, str) or (phrase_words is not None and not isinstance(phrase_words, list)):
+                raise ValueError("MAI phrase requires text and a word list")
+            if not phrase_text.strip() and not phrase_words:
+                continue
             words = []
-            for word in phrase.get("words", []):
+            for word in phrase_words or []:
+                if not isinstance(word, dict) or not isinstance(word.get("text"), str):
+                    raise ValueError("MAI word requires an object with string text")
                 word_start, word_end = _interval(word)
                 words.append(
                     TranscriptWord(
@@ -109,13 +118,18 @@ class MaiTranscribeBackend(HostedBackend):
                 )
             segments.append(
                 TranscriptSegment(
-                    text=str(phrase.get("text") or "").strip(),
+                    text=phrase_text.strip() or " ".join(w.text for w in words),
                     start_s=start,
                     end_s=end,
                     words=tuple(words),
                     speaker=speaker,
                 )
             )
+        if any(
+            not isinstance(phrase, dict) or (phrase.get("text") is not None and not isinstance(phrase["text"], str))
+            for phrase in raw["combinedPhrases"]
+        ):
+            raise ValueError("MAI combined phrase requires an object with string text")
         combined_text = " ".join(
             str(phrase.get("text") or "").strip()
             for phrase in raw["combinedPhrases"]
@@ -128,12 +142,21 @@ class MaiTranscribeBackend(HostedBackend):
             duration_s=(float(raw["durationMilliseconds"]) / 1000 if raw.get("durationMilliseconds") else None),
             segments=tuple(segments),
             metadata={
+                "response": raw,
+                **(
+                    {"word_alignment_complete": False}
+                    if not word_text_coverage_complete(
+                        ((s.speaker, s.text) for s in segments),
+                        ((w.speaker, w.text) for s in segments for w in s.words),
+                    )
+                    else {}
+                ),
                 "request": {
                     "endpoint": _PUBLIC_ENDPOINT,
                     "parameters": definition,
                     "api_version": self.config.options["api_version"],
                     "input": "file",
-                }
+                },
             },
         )
 

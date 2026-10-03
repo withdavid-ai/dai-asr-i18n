@@ -9,6 +9,7 @@ from dai_asr_i18n.evaluation._reference_validation import merge_speech_intervals
 from dai_asr_i18n.evaluation.references import BenchmarkReference
 from dai_asr_i18n.evaluation.scoring import score_sample
 from dai_asr_i18n.inference.base import Transcript
+from dai_asr_i18n.inference.word_coverage import word_text_coverage_complete
 from dai_asr_i18n.scoring import score_pair
 from dai_asr_i18n.scoring.diarization import DiarizationSegment
 
@@ -42,7 +43,9 @@ def reference_from_clip(clip: BenchmarkClip) -> BenchmarkReference:
     )
 
 
-def _blob(transcript: Transcript, *, diarizes: bool) -> dict:
+def _blob(
+    transcript: Transcript, *, diarizes: bool, word_activity: bool = False, check_word_coverage: bool = False
+) -> dict:
     if not diarizes:
         return {"verbatim": {"segments": [{"text": transcript.text}]}}
     segments = list(transcript.segments)
@@ -50,7 +53,18 @@ def _blob(transcript: Transcript, *, diarizes: bool) -> dict:
         raise ValueError("nonempty diarized transcript has no speaker segments")
     if any(s.speaker is None for s in segments):
         raise ValueError("diarized output contains a segment without a speaker label")
+    incomplete_words = transcript.metadata.get("word_alignment_complete") is False
+    if word_activity:
+        if check_word_coverage:
+            incomplete_words |= not word_text_coverage_complete(
+                ((s.speaker, s.text) for s in segments),
+                ((w.speaker, w.text) for s in segments for w in s.words),
+            )
+        else:
+            incomplete_words |= any(s.text.strip() and not s.words for s in segments)
     return {
+        "activity_source": "speaker_words" if word_activity else "native_segments",
+        **({"provider_meta": {"1": {"word_alignment_complete": False}}} if incomplete_words else {}),
         "verbatim": {
             "segments": [
                 {
@@ -64,6 +78,8 @@ def _blob(transcript: Transcript, *, diarizes: bool) -> dict:
         },
         "words": [
             {
+                "text": w.text,
+                "speaker_external_id": w.speaker,
                 "start_ms": None if w.start_s is None else w.start_s * 1000,
                 "end_ms": None if w.end_s is None else w.end_s * 1000,
             }
@@ -92,28 +108,21 @@ def score_connector_output(clip: BenchmarkClip, transcript: Transcript, channel:
                     "value": counts.error_rate,
                 }
         return {"language": reference.language, "condition": channel, "metrics": metrics, "unavailable": {}}
-    blob = _blob(transcript, diarizes=model.diarizes)
-    result = score_sample(reference, blob, condition="mono", transcribes=model.transcribes, diarizes=model.diarizes)
-    # The connector retains individual provider words: do not let a grouped turn
-    # hide reversed Gemini words. Omit only these malformed activity predictions,
-    # preserving their text for lexical scoring and splitting the affected turns.
-    if model.backend == "gemini-transcribe" and model.diarizes:
-        words = [w for s in transcript.segments for w in s.words]
-        if any(w.start_s is not None and w.end_s is not None and w.end_s < w.start_s for w in words):
-            from dai_asr_i18n.inference.backends.hosted import segments_from_words
-
-            valid_segments, group = [], []
-            for word in words:
-                if word.start_s is not None and word.end_s is not None and word.end_s < word.start_s:
-                    valid_segments.extend(segments_from_words(tuple(group), require_speakers=True))
-                    group = []
-                else:
-                    group.append(word)
-            valid_segments.extend(segments_from_words(tuple(group), require_speakers=True))
-            activity = _blob(Transcript(text="", segments=tuple(valid_segments)), diarizes=True)
-            timed = score_sample(reference, activity, condition="mono", transcribes=False, diarizes=True)
-            result["metrics"].update(timed["metrics"])
-            result["unavailable"] = timed["unavailable"]
+    word_activity = model.backend in {"elevenlabs", "mai-transcribe", "gemini-transcribe", "xai-grok"}
+    blob = _blob(
+        transcript,
+        diarizes=model.diarizes,
+        word_activity=word_activity,
+        check_word_coverage=model.backend == "mai-transcribe",
+    )
+    result = score_sample(
+        reference,
+        blob,
+        condition="mono",
+        transcribes=model.transcribes,
+        diarizes=model.diarizes,
+        provider="gemini_transcribe" if model.backend == "gemini-transcribe" else None,
+    )
     return result
 
 

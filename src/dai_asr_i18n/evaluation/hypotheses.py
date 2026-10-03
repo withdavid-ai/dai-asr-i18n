@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from dai_asr_i18n.evaluation._hypothesis_timing import PROTOCOL, _hyp_by_speaker, _hyp_timeline, gemini_timeline
+from dai_asr_i18n.evaluation.activity import speaker_word_activity
 from dai_asr_i18n.scoring.diarization import DiarizationSegment
 
 GEMINI_TIMING_POLICY = PROTOCOL
@@ -61,6 +62,13 @@ def hypothesis_timeline(blob: Mapping, *, provider: str | None = None) -> tuple[
     The result is a speaker-activity timeline for diarization scoring.
     """
     validate_hypothesis_blob(blob)
+    source = blob.get("activity_source", "native_segments")
+    if source == "speaker_words":
+        if blob.get("physical_channel_blobs"):
+            raise ValueError("speaker-word activity requires a mixed-audio response")
+        return speaker_word_activity(blob, omit_reversed_words=provider == "gemini_transcribe")
+    if source != "native_segments":
+        raise ValueError(f"unknown activity_source {source!r}")
     if provider == "gemini_transcribe":
         if blob.get("physical_channel_blobs"):
             raise ValueError("Gemini omission policy applies only to mixed audio")
