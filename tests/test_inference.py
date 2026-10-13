@@ -126,6 +126,7 @@ def test_builtin_configs_are_pinned_and_distinct():
 def test_diarization_run_configs_preserve_backend_and_access_contracts():
     sortformer = load_run_config("sortformer-4spk-v2.1")
     pyannote = load_run_config("pyannote-community-1")
+    pyannote_precision = load_run_config("pyannote-precision-3")
     diarizen = load_run_config("diarizen-wavlm-large-s80-md-v2")
     nemotron = load_run_config("nemotron-3-diarization")
 
@@ -135,6 +136,25 @@ def test_diarization_run_configs_preserve_backend_and_access_contracts():
     assert pyannote.model.backend == "pyannote"
     assert pyannote.model.authenticated is True
     assert pyannote.model.environment == ("HF_TOKEN",)
+    assert pyannote_precision.channels == ("mono",)
+    assert pyannote_precision.model.backend == "pyannote-api"
+    assert pyannote_precision.model.model_id == "precision-3"
+    assert pyannote_precision.model.environment == ("PYANNOTE_API_KEY",)
+    assert pyannote_precision.model.device == "remote"
+    assert pyannote_precision.model.compute_type == "provider-managed"
+    assert pyannote_precision.model.transcribes is False
+    assert pyannote_precision.model.diarizes is True
+    assert pyannote_precision.model.options == {
+        "api_endpoint": "https://api.pyannote.ai/v1/diarize",
+        "vadSensitivity": 0.0,
+        "crosstalkSensitivity": 0.0,
+        "turnLevelConfidence": False,
+        "speechProbability": False,
+        "crosstalkProbability": False,
+        "speakerProbability": False,
+        "exclusive": False,
+        "transcription": False,
+    }
     assert diarizen.model.backend == "diarizen"
     assert diarizen.model.options["weights_license"] == "CC-BY-NC-4.0"
     assert nemotron.model.revision == "f667ed73aee57d40cc39428eb768b4fd87a0a29e"
@@ -186,15 +206,20 @@ def test_preflight_is_read_only_and_runner_resumes(tmp_path: Path):
     output = tmp_path / "output"
     config = load_run_config("whisper-large-v3-portable")
     backend = FakeBackend()
+    progress = []
 
     report = preflight_run(dataset, config, backend=backend)
     assert report.ok
     assert report.tasks == 2
     assert not output.exists()
 
-    first = run_inference(dataset, config, output, backend=backend)
+    first = run_inference(dataset, config, output, backend=backend, progress=progress.append)
     assert first.completed == 2
     assert first.skipped == 0
+    assert [update.processed for update in progress] == [0, 1, 2]
+    assert progress[-1].completed == 2
+    assert progress[-1].skipped == progress[-1].failed == 0
+    assert progress[-1].total == 2
     assert len(backend.calls) == 2
     rows = [json.loads(line) for line in (output / "hypotheses.jsonl").read_text().splitlines()]
     assert {row["channel"] for row in rows} == {"ch1", "ch2"}
@@ -211,9 +236,13 @@ def test_preflight_is_read_only_and_runner_resumes(tmp_path: Path):
         }
         assert row["reference_diarization"] == expected_activity[row["channel"]]
 
-    second = run_inference(dataset, config, output, backend=backend)
+    progress.clear()
+    second = run_inference(dataset, config, output, backend=backend, progress=progress.append)
     assert second.completed == 0
     assert second.skipped == 2
+    assert [update.processed for update in progress] == [0, 1, 2]
+    assert progress[-1].skipped == 2
+    assert progress[-1].completed == progress[-1].failed == 0
     assert len(backend.calls) == 2
 
 
@@ -348,15 +377,59 @@ def test_systematic_failures_abort_and_secrets_are_redacted(tmp_path: Path, monk
     output = tmp_path / "output"
     config = load_run_config("whisper-large-v3-portable")
     monkeypatch.setattr("dai_asr_i18n.inference.runner.SYSTEMATIC_FAILURE_THRESHOLD", 2)
+    progress = []
 
-    report = run_inference(dataset, config, output, backend=AlwaysFailBackend())
+    report = run_inference(dataset, config, output, backend=AlwaysFailBackend(), progress=progress.append)
     assert report.status == "incomplete_systematic_failure"
     assert report.failed == 2
+    assert [update.processed for update in progress] == [0, 1, 2]
+    assert progress[-1].failed == 2
     failures = (output / "failures.jsonl").read_text()
     assert "hf_1234567890SECRET" not in failures
     assert "[REDACTED]" in failures
     assert "secret-value" not in _safe_error(RuntimeError("api_key=secret-value"))
     assert "AKIAEXAMPLE" not in _safe_error(RuntimeError("aws_access_key_id=AKIAEXAMPLE"))
+
+
+def test_safe_error_redacts_provider_keys_without_touching_commit_shas():
+    r = _safe_error
+    # standalone, prefix-identifiable provider keys
+    assert "sk_abcdefghij0123456789" not in r(RuntimeError("elevenlabs sk_abcdefghij0123456789 rejected"))
+    assert "gsk_abcdefghij0123456789" not in r(RuntimeError("gsk_abcdefghij0123456789"))
+    assert "xai-abcdefghij0123456789" not in r(RuntimeError("xai-abcdefghij0123456789"))
+    assert "AIzaSyABCDEFGHIJ0123456789" not in r(RuntimeError("AIzaSyABCDEFGHIJ0123456789"))
+    # field-anchored keys with no unique standalone prefix (the Medium finding: Deepgram / ElevenLabs)
+    dg = "deadbeef" * 5  # 40-hex Deepgram key behind a `Token` auth scheme
+    assert dg not in r(RuntimeError(f"Authorization: Token {dg}"))
+    assert "dXNlcjpwYXNz" not in r(RuntimeError("Authorization: Basic dXNlcjpwYXNz"))
+    assert "XI-SECRET" not in r(RuntimeError("xi-api-key: XI-SECRET"))
+    assert "DG-SECRET" not in r(RuntimeError("DEEPGRAM_API_KEY=DG-SECRET"))
+    # HTTP clients commonly render headers as Python or JSON mappings. Quotes around both the
+    # field name and value must not bypass redaction.
+    assert dg not in r(RuntimeError(f"headers={{'Authorization': 'Token {dg}'}}"))
+    assert "XI-SECRET" not in r(RuntimeError('{"xi-api-key": "XI-SECRET"}'))
+    assert "AZURE-SECRET" not in r(RuntimeError("Ocp-Apim-Subscription-Key: AZURE-SECRET"))
+    connection = "AccountName=demo;AccountKey=AZURE-SECRET;EndpointSuffix=core.windows.net"
+    assert "AZURE-SECRET" not in r(RuntimeError(f'connection_string="{connection}"'))
+    bare_connection = r(RuntimeError(connection))
+    assert "AZURE-SECRET" not in bare_connection
+    assert "AccountName=demo" in bare_connection
+    assert "EndpointSuffix=core.windows.net" in bare_connection
+    query = r(RuntimeError("https://host/v1?api_key=secret&model=whisper"))
+    assert query == "https://host/v1?api_key=[REDACTED]&model=whisper"
+    sas = r(RuntimeError("https://host/blob?sv=1&sig=SAS-SECRET&se=tomorrow"))
+    assert sas == "https://host/blob?sv=1&sig=[REDACTED]&se=tomorrow"
+    # no false positive: a bare 40-hex commit SHA must survive for debuggability
+    sha = "a2373960" + "0" * 32
+    assert sha in r(RuntimeError(f"revision {sha} not found"))
+
+
+def test_read_source_rejects_builtin_name_traversal():
+    from dai_asr_i18n.inference.config import _read_source
+
+    for bad in ["../../etc/passwd", "sub/dir/name", "/abs/name", r"..\..\etc\passwd", r"sub\dir\name"]:
+        with pytest.raises(ValueError, match="bare built-in name"):
+            _read_source(bad)
 
 
 def test_mono_run_reconstructs_unpublished_mix_and_records_derived_digest(tmp_path: Path):

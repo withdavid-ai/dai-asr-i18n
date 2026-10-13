@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://www.withdavid.ai/">
+    <img alt="David AI" src="docs/assets/david-ai-wordmark.svg" width="208">
+  </a>
+</p>
+
 # DAI-ASR-I18N
 
 DAI-ASR-I18N is a multilingual evaluation toolkit for automatic speech recognition. It provides
@@ -13,7 +19,7 @@ Score a reference and hypothesis from the command line. The language policy sele
 metric:
 
 ```bash
-dai-asr-i18n score \
+uv run --locked dai-asr-i18n score \
   --language zh \
   --reference "學習語言" \
   --hypothesis "学习语言"
@@ -33,20 +39,43 @@ print(result.to_dict())
 
 ## Installation
 
-DAI-ASR-I18N requires Python 3.11 or newer. Install it from a checkout:
+DAI-ASR-I18N requires Python 3.11 or newer. If `uv` is not installed on macOS or Linux, install it
+with the [official installer](https://docs.astral.sh/uv/getting-started/installation/):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+From the repository root, synchronize the locked environment:
+
+```bash
+uv sync --locked
+```
+
+Run commands in the synchronized environment with `uv run`, for example:
+
+```bash
+uv run --locked dai-asr-i18n --help
+```
+
+`--locked` makes `uv` fail if `uv.lock` is out of date instead of silently updating it. It may still
+synchronize the environment to the versions already recorded in the lockfile.
+
+Alternatively, install into the current Python environment with pip:
 
 ```bash
 python -m pip install .
 ```
 
-Install optional dependencies only when needed:
+Hugging Face dataset downloads, Parquet release tables, and FLAC validation are included in the
+base install. Install optional dependencies only when needed for other workflows:
 
 ```bash
-python -m pip install ".[audio]"       # audio decoding and preparation
-python -m pip install ".[speaker]"     # speaker-attributed and diarization metrics
+python -m pip install ".[audio]"          # audio decoding and preparation
+python -m pip install ".[speaker]"        # speaker-attributed and diarization metrics
 python -m pip install ".[audio,speaker]"
-python -m pip install ".[hf,audio,local]"   # Hugging Face + local inference
-python -m pip install ".[hf,audio,hosted]"  # Hugging Face + hosted APIs
+python -m pip install ".[audio,local]"    # local inference
+python -m pip install ".[audio,hosted]"   # hosted APIs
 ```
 
 ## Features
@@ -59,6 +88,34 @@ python -m pip install ".[hf,audio,hosted]"  # Hugging Face + hosted APIs
 - Pinned Hugging Face dataset pulls and resumable local or hosted inference
 - Optional deterministic Modal fan-out using the same execution path
 
+## Supported languages
+
+The DAI-ASR-I18N benchmark covers 21 languages. Pass the listed code to `--language`; regional language tags are canonicalized to their primary language.
+
+| Language | Code | Default metric |
+|---|---:|---:|
+| Arabic | `ar` | WER |
+| Bengali | `bn` | WER |
+| German | `de` | WER |
+| English | `en` | WER |
+| Spanish | `es` | WER |
+| French | `fr` | WER |
+| Hindi | `hi` | WER |
+| Indonesian | `id` | WER |
+| Italian | `it` | WER |
+| Japanese | `ja` | CER |
+| Korean | `ko` | CER |
+| Marathi | `mr` | WER |
+| Portuguese | `pt` | WER |
+| Russian | `ru` | WER |
+| Tamil | `ta` | WER |
+| Telugu | `te` | WER |
+| Thai | `th` | CER |
+| Tagalog | `tl` | WER |
+| Turkish | `tr` | WER |
+| Vietnamese | `vi` | WER |
+| Mandarin Chinese | `zh` | CER |
+
 ## Batch scoring
 
 Provide newline-delimited JSON containing `reference`, `hypothesis`, and `language`. Additional
@@ -70,8 +127,8 @@ fields are retained as metadata and can be used for grouping.
 ```
 
 ```bash
-dai-asr-i18n score --input pairs.jsonl --output scores.json
-dai-asr-i18n score --input pairs.jsonl --group-by model --output scores-by-model.json
+uv run --locked dai-asr-i18n score --input pairs.jsonl --output scores.json
+uv run --locked dai-asr-i18n score --input pairs.jsonl --group-by model --output scores-by-model.json
 ```
 
 Results include normalized text, edit counts, micro-averaged aggregates, policy identifiers, and
@@ -80,42 +137,59 @@ normalization, or `--metric wer|cer|ser` to override automatic metric selection 
 
 ## Dataset inference
 
-First, users should be able to login and authenticate via Hugging Face:
+Authenticate with Hugging Face before downloading the gated dataset. Your account must already
+have access to the [dataset](https://huggingface.co/datasets/davidai-labs/DAI-ASR-I18N):
 
 ```bash
-hf auth login
+uv run --locked hf auth login
 ```
 
-First, open the dataset’s [commit history on Hugging Face](https://huggingface.co/datasets/davidai-labs/DAI-ASR-I18N/commits/main),
-select the version you want to evaluate, and copy its **full 40-character commit SHA** from the
-commit page. The abbreviated hash shown in the history list is not sufficient.
+Dataset pulls default to `davidai-labs/DAI-ASR-I18N` at revision `latest`. The `latest` alias
+resolves the current `main` branch to its full commit SHA when the pull starts.
 
-Replace the placeholder below with that full SHA and export it in your shell:
+The resolved SHA is recorded in the dataset receipt and used for every file download in that pull.
 
-```bash
-export HF_DATASET_COMMIT="<FULL_40_CHARACTER_COMMIT_SHA>"
-```
-
-The existing dataset format is supported: `word_alignments` contain speaker IDs and
-aligned words with text, start and end times. A separate segment-level `text` field is
-not required. Local manifests remain schema version 2. Scoring uses the supplied
-reference timestamps as published; it does not rerun alignment or change the dataset.
-
-Keep this value fixed for the run. Then pull a language selection and run a built-in profile:
+Run these commands to pull the latest dataset version and run the `whisper-large-v3-portable`
+profile locally:
 
 ```bash
-dai-asr-i18n dataset pull \
-  --repo davidai-labs/DAI-ASR-I18N \
-  --revision "$HF_DATASET_COMMIT" \
+uv run --locked dai-asr-i18n dataset pull \
   --authenticated \
   --language en \
   --output .artifacts/datasets/public-en
 
-dai-asr-i18n run \
+uv run --locked --extra local --extra speaker dai-asr-i18n run \
   --dataset .artifacts/datasets/public-en \
   --config whisper-large-v3-portable \
   --output .artifacts/runs/whisper-en
 ```
+
+`--authenticated` lets the dataset client use the token saved by `hf auth login`; the gated
+dataset cannot be downloaded anonymously. For inference, the `local` extra provides
+`faster-whisper`, while `speaker` provides speaker-aware scoring dependencies. On the first run,
+`uv` may install these packages before starting the command.
+
+The Whisper model is public, so an unauthenticated Hugging Face warning during model download is
+informational. On a CPU without efficient float16 support, CTranslate2 automatically converts the
+model to float32; this is expected, but inference will be slower and use more memory.
+
+During inference, an interactive progress bar reports processed channel tasks and the completed,
+resumed, and failed counts. Progress is written to stderr so the final JSON report remains clean on
+stdout. Add `--no-progress` to disable the bar.
+
+If you want to run against a particular version of the dataset, open the dataset’s
+[commit history on Hugging Face](https://huggingface.co/datasets/davidai-labs/DAI-ASR-I18N/commits/main),
+select the version you want to evaluate, and export its **full 40-character commit SHA**. The
+abbreviated hash shown in the history list is not sufficient:
+
+```bash
+export HF_DATASET_REVISION="<FULL_40_CHARACTER_COMMIT_SHA>"
+```
+
+Add `--revision "$HF_DATASET_REVISION"` to the `dataset pull` command to use that version.
+
+The existing dataset format is supported: `word_alignments` contain speaker IDs and
+aligned words with text, start and end times.
 
 We provide starter code for running inference on Modal in [`deploy/`](deploy/).
 You can also use your own GPUs or infrastructure, as long as your model outputs plug into
@@ -179,7 +253,7 @@ Reconstruct the canonical mixed-speaker input from two lossless channels. Pass a
 available:
 
 ```bash
-dai-asr-i18n mix-mono \
+uv run --locked --extra audio dai-asr-i18n mix-mono \
   --channel-1 speaker_1.flac \
   --channel-2 speaker_2.flac \
   --output mono.wav
@@ -194,12 +268,26 @@ manifest. The same operation is available as `build_mono_mix` in Python.
 Generate a standalone manifest alongside benchmark outputs:
 
 ```bash
-dai-asr-i18n manifest --output manifest.json
+uv run --locked dai-asr-i18n manifest --output manifest.json
 ```
 
 Manifests record the package and dependency versions, normalization/scoring policy identifiers,
 implementation hash, metric map, Unicode version, and optional resource hashes. Pin the package
 release or Git commit and retain this manifest with scored artifacts.
+
+## Previous research
+
+You can follow our frontier AI research on our website:
+
+- [DAI-S2S-ST: Evaluating S2S Model Quality with Human Preference Data](https://research.withdavid.ai/blog/st-s2s-eval)
+  presents a single-turn speech-to-speech leaderboard built from 153,000 comparative ratings by 283
+  people. It evaluates seven models on 819 recorded prompts and twelve dimensions spanning
+  humanness and technical quality.
+
+- [Can Large Audio Language Models reliably judge speech-to-speech models?](https://research.withdavid.ai/blog/lalm-as-judge-vs-hitl)
+  compares three LALM judges with a calibrated human panel across content, acoustic, and interaction
+  quality. The study explores where model judges track human preferences, where they diverge, and
+  when human-in-the-loop evaluation remains necessary.
 
 ## Development
 

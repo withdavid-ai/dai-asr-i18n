@@ -8,6 +8,7 @@ from dai_asr_i18n.inference.backends.mai import MaiTranscribeBackend
 from dai_asr_i18n.inference.backends.meta import MetaMuseBackend
 from dai_asr_i18n.inference.backends.mistral import MistralVoxtralBackend
 from dai_asr_i18n.inference.backends.openai import OpenAITranscriptionBackend
+from dai_asr_i18n.inference.backends.pyannote import PyannoteApiBackend
 from dai_asr_i18n.inference.backends.qwen import Qwen3AsrBackend
 from dai_asr_i18n.inference.backends.xai import XaiGrokBackend
 
@@ -20,6 +21,7 @@ __all__ = [
     "MetaMuseBackend",
     "MistralVoxtralBackend",
     "OpenAITranscriptionBackend",
+    "PyannoteApiBackend",
     "Qwen3AsrBackend",
     "XaiGrokBackend",
 ]

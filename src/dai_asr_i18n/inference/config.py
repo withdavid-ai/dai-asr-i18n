@@ -78,6 +78,10 @@ def _read_source(value: str | Path) -> tuple[str, bytes]:
     name = str(value)
     if not name.endswith(".toml"):
         name = f"{name}.toml"
+    # Security: a built-in config name is a bare filename, never a path. Reject separators and
+    # traversal so it cannot escape the packaged `run_configs` resource directory.
+    if "/" in name or "\\" in name or name != Path(name).name or name in {".", ".."}:
+        raise ValueError(f"run config {value!r} must be a bare built-in name, not a path")
     candidate = resources.files("dai_asr_i18n.run_configs").joinpath(name)
     if not candidate.is_file():
         raise ValueError(f"run config {value!r} was not found as a path or built-in name")

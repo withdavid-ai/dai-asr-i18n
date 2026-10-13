@@ -759,15 +759,19 @@ wheels = [
 
 [[package]]
 name = "dai-asr-i18n"
-version = "0.5.0"
+version = "1.2.0"
 source = { editable = "." }
 dependencies = [
+    { name = "huggingface-hub" },
     { name = "indic-nlp-library" },
     { name = "jiwer" },
     { name = "more-itertools" },
     { name = "opencc" },
+    { name = "pyarrow" },
     { name = "rapidfuzz" },
     { name = "regex" },
+    { name = "soundfile" },
+    { name = "tqdm" },
     { name = "whisper-normalizer" },
 ]
 
@@ -775,13 +779,7 @@ dependencies = [
 audio = [
     { name = "librosa" },
     { name = "numpy" },
-    { name = "soundfile" },
     { name = "soxr" },
-]
-hf = [
-    { name = "huggingface-hub" },
-    { name = "pyarrow" },
-    { name = "soundfile" },
 ]
 hosted = [
     { name = "google-genai" },
@@ -791,10 +789,8 @@ local = [
     { name = "av" },
     { name = "ctranslate2" },
     { name = "faster-whisper" },
-    { name = "huggingface-hub" },
     { name = "librosa" },
     { name = "numpy" },
-    { name = "soundfile" },
     { name = "soxr" },
     { name = "tokenizers" },
 ]
@@ -810,14 +806,12 @@ speaker = [
 [package.dev-dependencies]
 dev = [
     { name = "build" },
-    { name = "huggingface-hub" },
     { name = "librosa" },
     { name = "numpy" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "soundfile" },
     { name = "soxr" },
     { name = "twine" },
 ]
@@ -829,8 +823,7 @@ requires-dist = [
     { name = "faster-whisper", marker = "extra == 'local'", specifier = "==1.2.1" },
     { name = "google-genai", marker = "extra == 'hosted'", specifier = "==2.23.0" },
     { name = "httpx", marker = "extra == 'hosted'", specifier = "==0.28.1" },
-    { name = "huggingface-hub", marker = "extra == 'hf'", specifier = "==1.33.0" },
-    { name = "huggingface-hub", marker = "extra == 'local'", specifier = "==1.33.0" },
+    { name = "huggingface-hub", specifier = "==1.33.0" },
     { name = "indic-nlp-library", specifier = "==0.92" },
     { name = "jiwer", specifier = "==4.0.0" },
     { name = "librosa", marker = "extra == 'audio'", specifier = "==0.11.0" },
@@ -841,32 +834,29 @@ requires-dist = [
     { name = "numpy", marker = "extra == 'local'", specifier = "==2.4.6" },
     { name = "numpy", marker = "extra == 'speaker'", specifier = "==2.4.6" },
     { name = "opencc", specifier = "==1.4.2" },
-    { name = "pyarrow", marker = "extra == 'hf'", specifier = ">=18,<24" },
+    { name = "pyarrow", specifier = ">=18,<24" },
     { name = "rapidfuzz", specifier = "==3.14.6" },
     { name = "regex", specifier = "==2026.6.28" },
     { name = "scipy", marker = "python_full_version >= '3.12' and extra == 'speaker'", specifier = "==1.18.0" },
     { name = "scipy", marker = "python_full_version < '3.12' and extra == 'speaker'", specifier = "==1.17.1" },
-    { name = "soundfile", marker = "extra == 'audio'", specifier = "==0.14.0" },
-    { name = "soundfile", marker = "extra == 'hf'", specifier = "==0.14.0" },
-    { name = "soundfile", marker = "extra == 'local'", specifier = "==0.14.0" },
+    { name = "soundfile", specifier = "==0.14.0" },
     { name = "soxr", marker = "extra == 'audio'", specifier = "==1.1.0" },
     { name = "soxr", marker = "extra == 'local'", specifier = "==1.1.0" },
     { name = "tokenizers", marker = "extra == 'local'", specifier = "==0.23.2" },
+    { name = "tqdm", specifier = "==4.70.1" },
     { name = "whisper-normalizer", specifier = "==0.1.12" },
 ]
-provides-extras = ["audio", "hf", "hosted", "local", "modal", "speaker"]
+provides-extras = ["audio", "hosted", "local", "modal", "speaker"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "build", specifier = ">=1.2,<2" },
-    { name = "huggingface-hub", specifier = "==1.33.0" },
     { name = "librosa", specifier = "==0.11.0" },
     { name = "numpy", specifier = "==2.4.6" },
     { name = "pytest", specifier = ">=8,<10" },
     { name = "ruff", specifier = ">=0.11,<1" },
     { name = "scipy", marker = "python_full_version < '3.12'", specifier = "==1.17.1" },
     { name = "scipy", marker = "python_full_version >= '3.12'", specifier = "==1.18.0" },
-    { name = "soundfile", specifier = "==0.14.0" },
     { name = "soxr", specifier = "==1.1.0" },
     { name = "twine", specifier = ">=6,<7" },
 ]
