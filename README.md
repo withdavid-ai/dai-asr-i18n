@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://www.withdavid.ai/">
-    <img alt="David AI" src="docs/assets/david-ai-wordmark.svg" width="208">
+    <img alt="David AI" src="https://raw.githubusercontent.com/withdavid-ai/dai-asr-i18n/main/docs/assets/david-ai-wordmark.svg" width="208">
   </a>
 </p>
 
