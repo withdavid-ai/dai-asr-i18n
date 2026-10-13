@@ -69,7 +69,7 @@ def load_selection(root: str | Path) -> DatasetSelection:
     receipt_path = directory / RECEIPT_FILENAME
     selection_path = directory / SELECTION_FILENAME
     if not receipt_path.is_file() or not selection_path.is_file():
-        raise ValueError(f"{directory} is not a DAI-ASR-I18N dataset selection")
+        raise ValueError(f"Dataset selection not found at {directory}.")
     if receipt_path.is_symlink() or selection_path.is_symlink():
         raise ValueError(f"{directory} contains symbolic-link selection metadata")
     receipt = _load_json(receipt_path.read_text(encoding="utf-8"), source=str(receipt_path))
@@ -184,7 +184,7 @@ def _verify_flac(path: Path, *, expected_duration_s: float, clip_id: str, channe
         import soundfile as sf
     except ImportError as error:
         raise ValueError(
-            'FLAC validation requires a dataset extra: pip install "dai-asr-i18n[hf]" or "dai-asr-i18n[local]"'
+            "FLAC validation is unavailable; reinstall dai-asr-i18n with its required dependencies"
         ) from error
     try:
         info = sf.info(path)

@@ -6,12 +6,14 @@ import hashlib
 import json
 import re
 import shutil
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
 
 from dai_asr_i18n.datasets.models import (
+    _SAFE_CLIP_ID,
     RECEIPT_FILENAME,
     SELECTION_FILENAME,
     AlignedWord,
@@ -19,11 +21,14 @@ from dai_asr_i18n.datasets.models import (
     BenchmarkClip,
     WordAlignmentSegment,
     huggingface_repo_id,
+    safe_relative_path,
 )
 from dai_asr_i18n.datasets.source import DatasetSource, DatasetSourceIdentity, PullResult, materialize_dataset
 from dai_asr_i18n.datasets.validation import load_selection, sha256_file, verify_selection
 
 _FULL_COMMIT = re.compile(r"[0-9a-f]{40}")
+_LATEST_REVISION = "latest"
+_LATEST_BRANCH = "main"
 _RELEASE_TABLE = re.compile(r"data/([a-z]{2,3}(?:-[a-z0-9]{1,8})*)/\1\.parquet")
 _RELEASE_COLUMNS = {
     "sample_id",
@@ -48,7 +53,9 @@ def _hub_api():
     try:
         from huggingface_hub import HfApi, hf_hub_download
     except ImportError as error:
-        raise ValueError('Hugging Face support is not installed; run: pip install "dai-asr-i18n[hf]"') from error
+        raise ValueError(
+            "Hugging Face support is unavailable; reinstall dai-asr-i18n with its required dependencies"
+        ) from error
     return HfApi, hf_hub_download
 
 
@@ -56,7 +63,9 @@ def _parquet_rows(path: Path) -> list[dict[str, Any]]:
     try:
         import pyarrow.parquet as parquet
     except ImportError as error:
-        raise ValueError('release-table support is not installed; run: pip install "dai-asr-i18n[hf]"') from error
+        raise ValueError(
+            "release-table support is unavailable; reinstall dai-asr-i18n with its required dependencies"
+        ) from error
     return parquet.read_table(path).to_pylist()
 
 
@@ -67,16 +76,19 @@ def _resolve_revision(
     authenticated: bool,
     allow_floating_revision: bool,
 ) -> tuple[Any, Any, str, bool]:
-    pinned = revision.lower() if _FULL_COMMIT.fullmatch(revision.lower()) else None
-    if not allow_floating_revision and pinned is None:
+    normalized = revision.lower()
+    pinned = normalized if _FULL_COMMIT.fullmatch(normalized) else None
+    latest = normalized == _LATEST_REVISION
+    if not allow_floating_revision and pinned is None and not latest:
         raise ValueError(
-            "Hugging Face revision must be a full 40-character commit SHA; "
+            'Hugging Face revision must be "latest" or a full 40-character commit SHA; '
             "use --allow-floating-revision only for exploration"
         )
     HfApi, hf_hub_download = _hub_api()
     token = True if authenticated else False
     api = HfApi()
-    info = api.dataset_info(repo_id=repo_id, revision=pinned or revision, token=token)
+    requested = _LATEST_BRANCH if latest else pinned or revision
+    info = api.dataset_info(repo_id=repo_id, revision=requested, token=token)
     resolved = str(info.sha).lower()
     if not _FULL_COMMIT.fullmatch(resolved):
         raise ValueError(f"Hugging Face returned an invalid resolved revision {resolved!r}")
@@ -227,6 +239,28 @@ def _release_alignments(row: dict[str, Any], field: str) -> dict[str, tuple[Word
     return {channel: tuple(segments) for channel, segments in result.items()}
 
 
+def _safe_release_sample_id(value: object) -> bool:
+    return isinstance(value, str) and bool(value) and bool(_SAFE_CLIP_ID.fullmatch(value)) and value not in {".", ".."}
+
+
+def _preflight_release_sample_ids(tables: list[tuple[str, list[dict[str, Any]]]]) -> None:
+    unsafe = [
+        f"{table} row {index}"
+        for table, rows in tables
+        for index, row in enumerate(rows)
+        if not _safe_release_sample_id(row.get("sample_id") if isinstance(row, dict) else None)
+    ]
+    if not unsafe:
+        return
+    preview = ", ".join(unsafe[:5])
+    if len(unsafe) > 5:
+        preview = f"{preview}, and {len(unsafe) - 5} more"
+    noun = "value" if len(unsafe) == 1 else "values"
+    message = f"release tables contain {len(unsafe)} unsafe sample_id {noun}: {preview}"
+    warnings.warn(message, RuntimeWarning, stacklevel=2)
+    raise ValueError(message)
+
+
 def _validate_release_row(row: object, table: str, index: int) -> dict[str, Any]:
     if not isinstance(row, dict):
         raise ValueError(f"{table} row {index} must be an object")
@@ -240,6 +274,12 @@ def _validate_release_row(row: object, table: str, index: int) -> dict[str, Any]
     language = row.get("language")
     if not isinstance(sample_id, str) or not sample_id:
         raise ValueError(f"{table} row {index} has an invalid sample_id")
+    # Validate before using sample_id to build an output path.
+    if not _safe_release_sample_id(sample_id):
+        raise ValueError(
+            f"{table} row {index} has an unsafe sample_id {sample_id!r}; it must match "
+            "[A-Za-z0-9][A-Za-z0-9._-]* with no path separators or traversal"
+        )
     if not isinstance(language, str) or not language:
         raise ValueError(f"{table} row {index} has an invalid language")
     for field in ("speaker1_id", "speaker2_id"):
@@ -335,10 +375,13 @@ def _pull_release_dataset(
         )
         for filename in table_filenames
     ]
+    table_rows = [(filename, _parquet_rows(path)) for filename, path in tables]
+    _preflight_release_sample_ids(table_rows)
+
     rows: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for filename, path in tables:
-        for index, raw_row in enumerate(_parquet_rows(path)):
+    for filename, raw_rows in table_rows:
+        for index, raw_row in enumerate(raw_rows):
             row = _validate_release_row(raw_row, filename, index)
             sample_id = row["sample_id"]
             if sample_id in seen:
@@ -403,7 +446,9 @@ def _pull_release_dataset(
     def materialize_audio(item: tuple[dict[str, Any], str]) -> tuple[str, str, AudioAsset]:
         row, channel = item
         sample_id = row["sample_id"]
-        relative = f"audio/{sample_id}/{channel}.flac"
+        # Defense in depth: validate the repo-relative path (rejects traversal/absolute/backslash)
+        # right before it is joined to local storage, independent of the upstream sample_id check.
+        relative = safe_relative_path(f"audio/{sample_id}/{channel}.flac", "audio path")
         target = destination.joinpath(*PurePosixPath(relative).parts)
         data = _embedded_audio(row, channel)
         if data is not None:

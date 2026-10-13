@@ -11,6 +11,7 @@ import platform
 import re
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -28,6 +29,7 @@ from dai_asr_i18n.inference.backends import (
     MetaMuseBackend,
     MistralVoxtralBackend,
     OpenAITranscriptionBackend,
+    PyannoteApiBackend,
     Qwen3AsrBackend,
     XaiGrokBackend,
 )
@@ -40,11 +42,28 @@ RUN_MANIFEST_FILENAME = "run-manifest.json"
 EFFECTIVE_CONFIG_FILENAME = "effective-run-spec.json"
 INFERENCE_PROTOCOL_VERSION = "dai-asr-i18n-inference-v5"
 SYSTEMATIC_FAILURE_THRESHOLD = 5
-_HF_TOKEN = re.compile(r"hf_[A-Za-z0-9]{10,}")
-_OPENAI_TOKEN = re.compile(r"sk-[A-Za-z0-9_-]{10,}")
+# Standalone, prefix-identifiable provider key shapes (low false-positive; order-independent).
+_TOKEN_PATTERNS = {
+    "huggingface": re.compile(r"hf_[A-Za-z0-9]{10,}"),
+    "openai": re.compile(r"sk-[A-Za-z0-9_-]{10,}"),  # Includes sk-proj- keys.
+    "elevenlabs": re.compile(r"sk_[A-Za-z0-9]{20,}"),
+    "groq": re.compile(r"gsk_[A-Za-z0-9]{20,}"),
+    "xai": re.compile(r"xai-[A-Za-z0-9]{20,}"),
+    "google": re.compile(r"AIza[A-Za-z0-9_-]{20,}"),
+    "aws_access_key_id": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+}
+# Field-name-anchored key:value pairs, including quoted mappings and authorization schemes.
+# This catches provider keys that have no unique standalone prefix without treating every
+# high-entropy value (for example a commit SHA) as a credential.
 _CREDENTIAL_VALUE = re.compile(
-    r"(?i)(authorization|api[_-]?key|token|access[_-]?key(?:[_-]?id)?|secret[_-]?access[_-]?key)"
-    r"(\s*[:=]\s*)([^\s,;&]+)"
+    r"(?ix)"
+    r"(?P<prefix>[\"']?(?:authorization|api[_-]?key|xi[_-]?api[_-]?key|"
+    r"access[_-]?key(?:[_-]?id)?|secret(?:[_-]?access[_-]?key)?|client[_-]?secret|"
+    r"subscription[_-]?key|account[_-]?key|shared[_-]?access[_-]?signature|sig|"
+    r"credential(?:s)?|token|password|passwd|connection[_-]?string|deepgram|elevenlabs)"
+    r"[\"']?\s*[:=]\s*)"
+    r"(?:(?P<quote>[\"'])[^\r\n]*?(?P=quote)|"
+    r"(?:[A-Za-z][A-Za-z0-9_-]*\s+)?[^\s,;&'\"}\]]+)"
 )
 
 
@@ -53,9 +72,15 @@ def _utc_now() -> str:
 
 
 def _safe_error(error: Exception) -> str:
-    text = _HF_TOKEN.sub("[REDACTED_HF_TOKEN]", str(error))
-    text = _OPENAI_TOKEN.sub("[REDACTED_API_KEY]", text)
-    return _CREDENTIAL_VALUE.sub(r"\1\2[REDACTED]", text)
+    text = str(error)
+    for pattern in _TOKEN_PATTERNS.values():
+        text = pattern.sub("[REDACTED_API_KEY]", text)
+
+    def redact_value(match: re.Match[str]) -> str:
+        quote = match.group("quote") or ""
+        return f"{match.group('prefix')}{quote}[REDACTED]{quote}"
+
+    return _CREDENTIAL_VALUE.sub(redact_value, text)
 
 
 def _backend_for(config: RunConfig) -> InferenceBackend:
@@ -68,6 +93,7 @@ def _backend_for(config: RunConfig) -> InferenceBackend:
         "meta-muse": MetaMuseBackend,
         "mistral-voxtral": MistralVoxtralBackend,
         "openai-transcription": OpenAITranscriptionBackend,
+        "pyannote-api": PyannoteApiBackend,
         "qwen3-asr": Qwen3AsrBackend,
         "xai-grok": XaiGrokBackend,
     }
@@ -455,6 +481,17 @@ class RunReport:
         }
 
 
+@dataclass(frozen=True)
+class RunProgress:
+    total: int
+    processed: int
+    completed: int
+    skipped: int
+    failed: int
+    sample_id: str | None = None
+    channel: str | None = None
+
+
 def run_inference(
     dataset_root: str | Path,
     config: RunConfig,
@@ -466,6 +503,7 @@ def run_inference(
     sample_ids: tuple[str, ...] = (),
     shard_index: int = 0,
     shard_count: int = 1,
+    progress: Callable[[RunProgress], None] | None = None,
 ) -> RunReport:
     """Run a deterministic task shard, fsync each result, and safely resume completed tasks."""
 
@@ -561,6 +599,22 @@ def run_inference(
         shard_index=shard_index,
         shard_count=shard_count,
     )
+
+    def report_progress(sample_id: str | None = None, channel: str | None = None) -> None:
+        if progress is not None:
+            progress(
+                RunProgress(
+                    total=len(tasks),
+                    processed=attempted,
+                    completed=completed,
+                    skipped=skipped,
+                    failed=failed,
+                    sample_id=sample_id,
+                    channel=channel,
+                )
+            )
+
+    report_progress()
     for clip, channel in tasks:
         attempted += 1
         task_id: str | None = None
@@ -577,6 +631,7 @@ def run_inference(
             )
             if task_id in completed_ids:
                 skipped += 1
+                report_progress(clip.clip_id, channel)
                 continue
             started = time.monotonic()
             transcript = selected_backend.transcribe(audio_path, language=_inference_language(clip, config))
@@ -650,7 +705,7 @@ def run_inference(
                     f"aborted after {consecutive_failures} consecutive identical failures: "
                     f"{signature[0]}: {signature[1]}"
                 )
-                break
+        report_progress(clip.clip_id, channel)
         if abort_reason is not None:
             break
 

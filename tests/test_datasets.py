@@ -13,7 +13,7 @@ import soundfile as sf
 import dai_asr_i18n.datasets.huggingface as huggingface
 from dai_asr_i18n.datasets.huggingface import pull_dataset
 from dai_asr_i18n.datasets.models import RECEIPT_FILENAME, SELECTION_FILENAME, BenchmarkClip
-from dai_asr_i18n.datasets.validation import load_manifest, verify_selection
+from dai_asr_i18n.datasets.validation import load_manifest, load_selection, verify_selection
 
 REVISION = "1" * 40
 
@@ -65,6 +65,15 @@ def _materialized(root: Path) -> Path:
         encoding="utf-8",
     )
     return root
+
+
+def test_load_selection_reports_missing_dataset(tmp_path: Path):
+    missing = tmp_path / "public-en"
+
+    with pytest.raises(ValueError) as error:
+        load_selection(missing)
+
+    assert str(error.value) == f"Dataset selection not found at {missing.resolve()}."
 
 
 def test_manifest_rejects_unsafe_paths(tmp_path: Path):
@@ -271,6 +280,63 @@ def test_release_rows_reject_noncanonical_columns_and_language_mismatch():
     row["language"] = "en"
     with pytest.raises(ValueError, match="language must match"):
         huggingface._validate_release_row(row, "data/ar/ar.parquet", 0)
+
+
+@pytest.mark.parametrize("bad_sample_id", ["../evil", "../../etc/passwd", "a/b", "foo/../bar", "/abs", "..", "."])
+def test_release_rows_reject_unsafe_sample_id(bad_sample_id):
+    # DAI-ASR-01: sample_id is interpolated into the audio write path (`audio/{sample_id}/...`);
+    # traversal/separator characters must be rejected at validation, before any file is written.
+    row = _release_row(sample_id=bad_sample_id)
+    with pytest.raises(ValueError, match="unsafe sample_id"):
+        huggingface._validate_release_row(row, "data/ar/ar.parquet", 0)
+
+
+def test_release_rows_accept_safe_sample_id():
+    row = _release_row(sample_id="8656cddd-a0d3-5348-931d-ace4c8614292")
+    validated = huggingface._validate_release_row(row, "data/ar/ar.parquet", 0)
+    assert validated["sample_id"] == "8656cddd-a0d3-5348-931d-ace4c8614292"
+
+
+def test_all_release_sample_ids_are_checked_before_output_is_created(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    table = tmp_path / "ar.parquet"
+    table.write_bytes(b"parquet-fixture")
+    monkeypatch.setattr(
+        "dai_asr_i18n.datasets.huggingface._parquet_rows",
+        lambda _: [
+            _release_row(sample_id="safe-id"),
+            _release_row(sample_id="../../outside"),
+            _release_row(sample_id="other/bad-id"),
+        ],
+    )
+    output = tmp_path / "selection"
+    downloads: list[str] = []
+
+    def fake_download(*, filename: str, **_: object) -> str:
+        downloads.append(filename)
+        return str(table)
+
+    with pytest.warns(RuntimeWarning, match="2 unsafe sample_id values") as caught:
+        with pytest.raises(ValueError, match="2 unsafe sample_id values"):
+            huggingface._pull_release_dataset(
+                repo_id="example/public-asr",
+                revision=REVISION,
+                resolved=REVISION,
+                repo_files=["data/ar/ar.parquet"],
+                hf_hub_download=fake_download,
+                token=False,
+                output=output,
+                languages=(),
+                clip_ids=(),
+                limit=None,
+                authenticated=False,
+                workers=1,
+            )
+
+    warning = str(caught[0].message)
+    assert "data/ar/ar.parquet row 1" in warning
+    assert "data/ar/ar.parquet row 2" in warning
+    assert downloads == ["data/ar/ar.parquet"]
+    assert not output.exists()
 
 
 def test_release_rows_reject_removed_reference_column():

@@ -86,7 +86,7 @@ def _filter_key(languages: tuple[str, ...], sample_ids: tuple[str, ...]) -> str:
 base_image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("ffmpeg", "libsndfile1")
-    .uv_sync(extras=["audio", "hf", "speaker"], frozen=True)
+    .uv_sync(extras=["audio", "speaker"], frozen=True)
     .env(SOURCE_ENV)
     .add_local_dir("src/dai_asr_i18n", remote_path="/root/dai_asr_i18n")
 )

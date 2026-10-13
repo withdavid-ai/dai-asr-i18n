@@ -70,7 +70,7 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
 base_dependencies = (
     modal.Image.debian_slim(python_version="3.13")
     .apt_install("ffmpeg", "libsndfile1")
-    .uv_sync(extras=["audio", "hf", "hosted", "speaker"], frozen=True)
+    .uv_sync(extras=["audio", "hosted", "speaker"], frozen=True)
     .env(
         {
             "DAI_ASR_I18N_MODAL_SECRETS": ",".join(SECRET_NAMES),

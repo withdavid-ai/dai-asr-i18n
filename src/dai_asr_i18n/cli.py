@@ -17,6 +17,8 @@ from dai_asr_i18n.normalization import normalization_manifest, normalize_with_me
 from dai_asr_i18n.scoring import aggregate_record_scores, score_pair, score_records
 
 _PROFILES = ("dai_asr_i18n", "whisper_baseline")
+_DEFAULT_DATASET_REPO = "davidai-labs/DAI-ASR-I18N"
+_DEFAULT_DATASET_REVISION = "latest"
 
 
 def _write_json(value: object, destination: str | None = None) -> None:
@@ -174,7 +176,45 @@ def _run_command(args: argparse.Namespace) -> int:
         return 0 if report.ok else 2
     if args.output is None:
         raise ValueError("--output is required unless --preflight is used")
-    report = run_inference(args.dataset, config, args.output, resume=not args.no_resume, **selection)
+    show_progress = not args.no_progress and sys.stderr.isatty()
+    progress_bar = None
+    last_processed = 0
+
+    def update_progress(progress) -> None:
+        nonlocal last_processed, progress_bar
+        if progress_bar is None:
+            from tqdm import tqdm
+
+            progress_bar = tqdm(
+                total=progress.total,
+                desc="Inference",
+                unit="task",
+                dynamic_ncols=True,
+                file=sys.stderr,
+            )
+        progress_bar.set_postfix(
+            completed=progress.completed,
+            resumed=progress.skipped,
+            failed=progress.failed,
+            sample=progress.sample_id or "-",
+            channel=progress.channel or "-",
+            refresh=False,
+        )
+        progress_bar.update(progress.processed - last_processed)
+        last_processed = progress.processed
+
+    try:
+        report = run_inference(
+            args.dataset,
+            config,
+            args.output,
+            resume=not args.no_resume,
+            progress=update_progress if show_progress else None,
+            **selection,
+        )
+    finally:
+        if progress_bar is not None:
+            progress_bar.close()
     _write_json(report.to_dict())
     return 0 if report.status == "complete" else 2
 
@@ -280,11 +320,15 @@ def parser() -> argparse.ArgumentParser:
     dataset_commands = dataset_parser.add_subparsers(dest="dataset_command", required=True)
 
     pull_parser = dataset_commands.add_parser("pull", help="selectively download a Hugging Face dataset")
-    pull_parser.add_argument("--repo", required=True, help="Hugging Face dataset repository, organization/name")
+    pull_parser.add_argument(
+        "--repo",
+        default=_DEFAULT_DATASET_REPO,
+        help=f"Hugging Face dataset repository (default: {_DEFAULT_DATASET_REPO})",
+    )
     pull_parser.add_argument(
         "--revision",
-        required=True,
-        help="full Hugging Face commit SHA",
+        default=_DEFAULT_DATASET_REVISION,
+        help='full Hugging Face commit SHA, or "latest" to resolve main (default: latest)',
     )
     pull_parser.add_argument(
         "--manifest",
@@ -342,6 +386,7 @@ def parser() -> argparse.ArgumentParser:
         help="validate the dataset, configuration, and runtime without loading weights or writing files",
     )
     run_parser.add_argument("--no-resume", action="store_true", help="refuse a non-empty output instead of resuming")
+    run_parser.add_argument("--no-progress", action="store_true", help="disable the interactive inference progress bar")
     run_parser.set_defaults(handler=_run_command)
 
     models_parser = subcommands.add_parser("models", help="inspect the frozen 16-system model catalog")

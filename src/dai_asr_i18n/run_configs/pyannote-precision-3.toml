@@ -1,0 +1,23 @@
+# Provider-managed pyannoteAI Precision-3 diarization profile.
+schema_version = 1
+name = "pyannote-precision-3-v1"
+channels = ["mono"]
+sample_rate_hz = 16000
+
+[model]
+backend = "pyannote-api"
+model_id = "precision-3"
+environment = ["PYANNOTE_API_KEY"]
+transcribes = false
+diarizes = true
+
+[model.options]
+api_endpoint = "https://api.pyannote.ai/v1/diarize"
+vadSensitivity = 0.0
+crosstalkSensitivity = 0.0
+turnLevelConfidence = false
+speechProbability = false
+crosstalkProbability = false
+speakerProbability = false
+exclusive = false
+transcription = false

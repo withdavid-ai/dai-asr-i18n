@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import sys
+from types import SimpleNamespace
 
 import pytest
 
 from dai_asr_i18n import __version__
 from dai_asr_i18n.cli import main, parser
+from dai_asr_i18n.inference import RunProgress
 
 
 def test_empty_command_prints_help(capsys):
@@ -197,16 +200,69 @@ def test_score_reports_unsupported_metric_without_traceback(capsys):
     assert "word segmenter" in capsys.readouterr().err
 
 
-def test_dataset_pull_requires_a_hugging_face_repository(capsys):
+def test_dataset_pull_defaults_to_the_public_dataset_at_latest():
     command = parser()
-    with pytest.raises(SystemExit) as error:
-        command.parse_args(
+    args = command.parse_args(["dataset", "pull"])
+
+    assert args.repo == "davidai-labs/DAI-ASR-I18N"
+    assert args.revision == "latest"
+
+
+def test_dataset_pull_accepts_repository_and_revision_overrides():
+    command = parser()
+    revision = "1" * 40
+    args = command.parse_args(["dataset", "pull", "--repo", "example/public-asr", "--revision", revision])
+
+    assert args.repo == "example/public-asr"
+    assert args.revision == revision
+
+
+def test_run_command_accepts_no_progress():
+    command = parser()
+    args = command.parse_args(["run", "--dataset", "dataset", "--config", "whisper-large-v3-portable", "--no-progress"])
+
+    assert args.no_progress is True
+
+
+def test_run_command_displays_interactive_progress(monkeypatch, capsys):
+    import dai_asr_i18n.inference as inference
+
+    monkeypatch.setattr(inference, "load_run_config", lambda _: object())
+
+    def fake_run_inference(*_args, progress, **_kwargs):
+        assert progress is not None
+        progress(RunProgress(total=1, processed=0, completed=0, skipped=0, failed=0))
+        progress(
+            RunProgress(
+                total=1,
+                processed=1,
+                completed=1,
+                skipped=0,
+                failed=0,
+                sample_id="clip-1",
+                channel="ch1",
+            )
+        )
+        return SimpleNamespace(status="complete", to_dict=lambda: {"status": "complete"})
+
+    monkeypatch.setattr(inference, "run_inference", fake_run_inference)
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: True)
+
+    assert (
+        main(
             [
+                "run",
+                "--dataset",
                 "dataset",
-                "pull",
-                "--revision",
-                "1" * 40,
+                "--config",
+                "whisper-large-v3-portable",
+                "--output",
+                "output",
             ]
         )
-    assert error.value.code == 2
-    assert "--repo" in capsys.readouterr().err
+        == 0
+    )
+    captured = capsys.readouterr()
+    assert json.loads(captured.out) == {"status": "complete"}
+    assert "Inference" in captured.err
+    assert "1/1" in captured.err

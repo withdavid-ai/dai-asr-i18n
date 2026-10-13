@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dai-asr-i18n"
-version = "0.5.0"
+version = "1.2.0"
 description = "Reproducible multilingual automatic speech recognition benchmarking"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,12 +24,16 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
+  "huggingface-hub==1.33.0",
   "indic-nlp-library==0.92",
   "jiwer==4.0.0",
   "more-itertools==11.1.0",
   "opencc==1.4.2",
+  "pyarrow>=18,<24",
   "rapidfuzz==3.14.6",
   "regex==2026.6.28",
+  "soundfile==0.14.0",
+  "tqdm==4.70.1",
   "whisper-normalizer==0.1.12",
 ]
 
@@ -37,13 +41,7 @@ dependencies = [
 audio = [
   "librosa==0.11.0",
   "numpy==2.4.6",
-  "soundfile==0.14.0",
   "soxr==1.1.0",
-]
-hf = [
-  "huggingface-hub==1.33.0",
-  "pyarrow>=18,<24",
-  "soundfile==0.14.0",
 ]
 hosted = [
   "google-genai==2.23.0",
@@ -53,10 +51,8 @@ local = [
   "av==18.1.0",
   "ctranslate2==4.8.2",
   "faster-whisper==1.2.1",
-  "huggingface-hub==1.33.0",
   "librosa==0.11.0",
   "numpy==2.4.6",
-  "soundfile==0.14.0",
   "soxr==1.1.0",
   "tokenizers==0.23.2",
 ]
@@ -78,16 +74,13 @@ Issues = "https://github.com/withdavid-ai/dai-asr-i18n/issues"
 
 [dependency-groups]
 dev = [
-  "huggingface-hub==1.33.0",
   "build>=1.2,<2",
-  "huggingface-hub==1.33.0",
   "librosa==0.11.0",
   "numpy==2.4.6",
   "pytest>=8,<10",
   "ruff>=0.11,<1",
   "scipy==1.17.1; python_version < '3.12'",
   "scipy==1.18.0; python_version >= '3.12'",
-  "soundfile==0.14.0",
   "soxr==1.1.0",
   "twine>=6,<7",
 ]
