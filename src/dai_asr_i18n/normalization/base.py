@@ -22,3 +22,17 @@ class TextNormalizer(ABC):
         """Concrete language transform recorded in score lineage."""
 
         return self.key
+
+
+class NormalizedText(str):
+    """String carrying the normalization profile that already normalized it."""
+
+    profile: str
+
+    def __new__(cls, text: str, profile: str) -> NormalizedText:
+        instance = super().__new__(cls, text)
+        instance.profile = profile
+        return instance
+
+    def __reduce__(self):
+        return type(self), (str(self), self.profile)

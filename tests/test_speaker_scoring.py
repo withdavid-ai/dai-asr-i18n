@@ -67,8 +67,8 @@ def test_speaker_scoring_applies_the_selected_normalizer_to_every_stream():
     score = cpcer({"A": "學習語言"}, {"X": "学习语言"}, language="zh")
     assert score.value == 0
     assert score.reference_normalized == {"A": "学习语言"}
-    assert score.normalization_policy == "dai-asr-i18n-normalization-v9"
-    assert score.scoring_policy == "dai-asr-i18n-offline-scoring-v3"
+    assert score.normalization_policy == "dai-asr-i18n-normalization-v10"
+    assert score.scoring_policy == "dai-asr-i18n-offline-scoring-v4"
 
 
 def test_speaker_scoring_rejects_invalid_shapes_and_unsupported_word_units():

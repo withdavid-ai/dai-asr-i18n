@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import cast
 
 from dai_asr_i18n.languages import canonical_language, metric_selection_for_language
-from dai_asr_i18n.normalization import canonical_profile, normalize_with_metadata
+from dai_asr_i18n.normalization import canonical_profile, normalize_pair
 from dai_asr_i18n.policies import METRIC_POLICY_VERSION, SCORING_POLICY_VERSION
 from dai_asr_i18n.scoring.alignment import align_tokens, tokens_for_metric
 from dai_asr_i18n.scoring.models import Metric, Score
@@ -43,6 +43,10 @@ def score_pair(
 ) -> Score:
     """Normalize and score one reference/hypothesis pair.
 
+    Under the ``dai_asr_i18n`` profile the pair is normalized together
+    (:func:`dai_asr_i18n.normalization.normalize_pair`): the reference is normalized on its own, and the
+    hypothesis may take the reference's spelling where a pair step allows it.
+
     With ``metric=None`` (or ``"auto"``), the public benchmark policy is used: CER for CJKT and
     WER for the other release languages. Languages outside the release roster require an explicit
     metric. Vietnamese's whitespace units are recorded as ``source_metric="ser"`` even though the
@@ -53,11 +57,10 @@ def score_pair(
 
     code, selected_metric, source_metric = _resolve_metric(language, metric)
 
-    reference_result = normalize_with_metadata(reference, code, profile)
-    hypothesis_result = normalize_with_metadata(hypothesis, code, profile)
+    normalized = normalize_pair(reference, hypothesis, code, profile)
     counts = align_tokens(
-        tokens_for_metric(reference_result.text, selected_metric),
-        tokens_for_metric(hypothesis_result.text, selected_metric),
+        tokens_for_metric(normalized.reference, selected_metric),
+        tokens_for_metric(normalized.hypothesis, selected_metric),
     )
     unit = "character" if selected_metric == "cer" else ("syllable" if source_metric == "ser" else "word")
     return Score(
@@ -66,12 +69,12 @@ def score_pair(
         metric=selected_metric,
         source_metric=source_metric,
         unit=unit,
-        normalizer=reference_result.normalizer,
-        normalization_policy=reference_result.policy,
+        normalizer=normalized.normalizer,
+        normalization_policy=normalized.policy,
         metric_policy=METRIC_POLICY_VERSION,
         scoring_policy=SCORING_POLICY_VERSION,
-        reference_normalized=reference_result.text,
-        hypothesis_normalized=hypothesis_result.text,
+        reference_normalized=normalized.reference,
+        hypothesis_normalized=normalized.hypothesis,
         counts=counts,
     )
 

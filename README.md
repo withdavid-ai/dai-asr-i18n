@@ -20,20 +20,30 @@ metric:
 
 ```bash
 uv run --locked dai-asr-i18n score \
-  --language zh \
-  --reference "學習語言" \
-  --hypothesis "学习语言"
+  --language hi \
+  --reference "मेरा कंप्यूटर खराब है" \
+  --hypothesis "मेरा computer खराब है"
 ```
+
+The hypothesis writes the loanword "computer" in Latin script and the reference writes it in Devanagari.
+The scorer reads the hypothesis against the reference, so the pair scores a WER of 0.
 
 Use the same normalization and scoring policies from Python:
 
 ```python
-from dai_asr_i18n import normalize, score_pair
+from dai_asr_i18n import normalize, normalize_pair, score_pair
 
+assert normalize("(laughs) Call me at (02) 8012-3456, OK?", "en") == "call me at 02 8012 3456 ok"
 assert normalize("學習語言", "zh") == "学习语言"
 
+# Both texts go through the whole per-text pipeline (here: the event parenthetical, the native digit ३
+# and the danda), then the pair rules read the hypothesis against the reference.
+pair = normalize_pair("(हँसी) मेरा कंप्यूटर ३ दिन से ख़राब है।", "मेरा computer 3 दिन से ख़राब है", "hi")
+print(pair.reference)  # मेरा कंप्यूटर 3 दिन से ख़राब है
+print(pair.hypothesis)  # मेरा कंप्यूटर 3 दिन से ख़राब है
+
 result = score_pair("你好世界", "你好世届", language="zh")
-print(result.metric, result.value)
+print(result.metric, result.value)  # cer 0.25
 print(result.to_dict())
 ```
 
@@ -80,7 +90,9 @@ python -m pip install ".[audio,hosted]"   # hosted APIs
 
 ## Features
 
-- Benchmark and stock-Whisper normalization profiles for 21 languages
+- The benchmark normalizer for 21 languages, and stock Whisper normalization for comparison
+- Pair normalization: a hypothesis takes the reference's spelling where a pair rule allows it, and never
+  gains an error from it
 - WER and CER scoring with substitution, deletion, insertion, and hit counts
 - Speaker-attributed cpWER, cpCER, and cpSER with optimal speaker permutation
 - Exact-interval DER, JER, and speaker-count metrics
@@ -115,6 +127,48 @@ The DAI-ASR-I18N benchmark covers 21 languages. Pass the listed code to `--langu
 | Turkish | `tr` | WER |
 | Vietnamese | `vi` | WER |
 | Mandarin Chinese | `zh` | CER |
+
+## Normalization
+
+The `dai_asr_i18n` profile normalizes each text in fixed stages. A language's base transform does the casing,
+Unicode normalization and script-specific cleanup (Turkish dotted and dotless i, Arabic harakat and letter
+variants, conservative Indic cleanup, traditional-to-simplified Chinese, Whisper's English spelling and
+number rules). The steps below then each change one thing.
+
+| Step | Languages | Rule | Example |
+|---|---|---|---|
+| Event parentheses | all | A parenthetical is removed with its contents only when it names a sound or event from the event list. Any other parenthetical keeps its contents and loses only the parentheses. | "(laughs) call (02) 8012" → "call 02 8012" |
+| Apostrophes | all | Every apostrophe look-alike becomes the straight apostrophe, so the punctuation step sees one character. | ’ ‘ ʼ ´ \` ′ → ' |
+| Spaced clitics | en, fr, it | A clitic written with a space before its apostrophe is attached to its word: an English contraction ending, or a French or Italian elision particle. | "I 'm" → "i'm", "c 'est" → "c'est" |
+| Russian ё | ru | ё is written as е, composed or decomposed, in either case, since transcripts write the letter both ways. | "ещё" → "еще" |
+| Thai mark order | th | Vowel and tone marks are put in one order, and a space before a combining mark is removed. No mark and no repeated vowel is deleted. | "เเปลก" → "แปลก" |
+| Japanese characters | ja | NFKC is applied, and hyphen and tilde look-alikes and decorative symbols (〜 ～ ‐ ♪ ☆ ★ ○ ● ◎ ♥) are deleted. 〒 is kept. | "コーヒー〜♪" → "コーヒー" |
+| Japanese long vowels | ja | A run of long-vowel marks becomes one ー. It runs after punctuation removal, which can bring two ー together. | "コーーヒー" → "コーヒー" |
+| Native digits | all | Every Unicode decimal digit becomes its ASCII digit, so a number is the same in any script. | "৩", "٣", "३", "๓" → "3" |
+| Punctuation | all | Punctuation and symbols become spaces. An apostrophe stays between two letters, except in Korean, Japanese, Chinese and Thai, where it is a quote mark unless inside a Latin word, and in the five Indic languages, where it marks a suffix boundary. Every hyphen becomes a space. | "l'homme" stays; "benar-benar" → "benar benar"; "만족감'이라고도" → "만족감이라고도" |
+| Leading zeros | en | A digit group that starts with 0 keeps its zeros instead of being read as a number. A lone 0, a decimal and a group joined to a letter are not touched. | "0556" stays "0556" |
+
+English keeps contractions and fillers as written ("don't", "gonna", "um"), and reads numbers as
+Whisper does ("twenty-one dollars" → "$21"), except that "oh" is never a zero and "pounds" is not
+currency.
+
+Two rules need both transcripts. Scoring applies them to the hypothesis only, after both texts are
+normalized:
+
+- **Transliteration** (hi, mr, bn, ta, te, ar, ko, ru, ja, th): a loanword the model writes in one script
+  takes the reference's spelling of it in the other ("computer" → "कंप्यूटर", "জিবিটি" → "gpt"). The
+  classes come from the transliteration maps in
+  [`src/dai_asr_i18n/normalization/resources/transliteration/`](src/dai_asr_i18n/normalization/resources/transliteration/).
+  Two spellings in the same script are never matched: that is a spelling difference, not a script choice.
+- **Apostrophes against the reference** (de, tl, tr): a stretch that differs from the reference only by
+  apostrophes ("aus'm" / "ausm", "türkçe'yi" / "türkçeyi") takes the reference's spelling.
+
+The reference is never changed, so the denominator is the per-text output. A change that would raise the
+word or character edit distance is not made. `dai-asr-i18n normalize --reference ... --json` shows the changes
+from the command line.
+
+`--profile whisper_baseline` scores with stock Whisper normalization instead: `EnglishTextNormalizer` for
+English and `BasicTextNormalizer` for every other language, with no pair rules.
 
 ## Batch scoring
 
@@ -211,7 +265,9 @@ The runner writes `scores.jsonl` beside its own inference outputs. Physical chan
 scored independently; dual-channel scores sum their edit counts and require both channels.
 Modal shard consolidation combines channels even when they ran on different workers.
 Mixed-audio hybrid models receive speaker-permuted transcript scores and diarization scores;
-diarization-only models receive only diarization scores.
+diarization-only models receive only diarization scores. The speaker-permuted scores normalize each
+reference speaker and hypothesis speaker as a pair, so the pair rules apply as in `score_pair`; with
+perfect diarization, a mono transcript split by speaker scores exactly as separate channels do.
 
 | Metric | Reference / convention |
 |---|---|

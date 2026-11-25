@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dai-asr-i18n"
-version = "1.2.0"
+version = "2.0.0"
 description = "Reproducible multilingual automatic speech recognition benchmarking"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,6 +30,7 @@ dependencies = [
   "more-itertools==11.1.0",
   "opencc==1.4.2",
   "pyarrow>=18,<24",
+  "pythainlp==5.3.4",
   "rapidfuzz==3.14.6",
   "regex==2026.6.28",
   "soundfile==0.14.0",

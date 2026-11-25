@@ -6,6 +6,7 @@ from dataclasses import replace
 
 import pytest
 
+from dai_asr_i18n.normalization import normalize
 from dai_asr_i18n.policies import METRIC_POLICY_VERSION, SCORING_POLICY_VERSION
 from dai_asr_i18n.scoring import aggregate_record_scores, aggregate_scores, score_pair, score_records
 
@@ -47,10 +48,17 @@ def test_character_error_ignores_whitespace():
 
 
 def test_benchmark_and_whisper_can_be_compared_on_identical_inputs():
-    benchmark = score_pair("你好（音乐）世界", "你好世界", language="zh", profile="dai_asr_i18n")
+    dai_asr_i18n = score_pair("你好（音乐）世界", "你好世界", language="zh", profile="dai_asr_i18n")
     whisper = score_pair("你好（音乐）世界", "你好世界", language="zh", profile="whisper_baseline")
-    assert benchmark.value == 0
+    assert dai_asr_i18n.value == 0
     assert whisper.value > 0
+
+
+def test_score_pair_reads_the_hypothesis_against_the_reference():
+    score = score_pair("मेरा कंप्यूटर खराब है", "मेरा computer खराब है", language="hi")
+    assert score.hypothesis_normalized == "मेरा कंप्यूटर खराब है"
+    assert score.counts.numerator == 0
+    assert normalize("मेरा computer खराब है", "hi") == "मेरा computer खराब है"
 
 
 @pytest.mark.parametrize("metric", ["wer", "cer"])
@@ -98,7 +106,7 @@ def test_ser_is_not_fabricated_from_non_vietnamese_whitespace(language):
 
 def test_score_records_policy_lineage():
     score = score_pair("alpha", "alpha", language="en")
-    assert score.normalization_policy == "dai-asr-i18n-normalization-v9"
+    assert score.normalization_policy == "dai-asr-i18n-normalization-v10"
     assert score.metric_policy == METRIC_POLICY_VERSION
     assert score.scoring_policy == SCORING_POLICY_VERSION
 
@@ -123,7 +131,7 @@ def test_micro_average_sums_counts_before_division():
 def test_aggregation_keeps_distinct_normalizer_lineage_separate():
     score = score_pair("alpha", "alpha", language="en")
     aggregates = aggregate_scores([score, replace(score, normalizer="different")])
-    assert [aggregate.normalizer for aggregate in aggregates] == ["different", "whisper_english"]
+    assert [aggregate.normalizer for aggregate in aggregates] == ["dai_asr_i18n:whisper_english", "different"]
 
 
 def test_record_validation_names_missing_fields():

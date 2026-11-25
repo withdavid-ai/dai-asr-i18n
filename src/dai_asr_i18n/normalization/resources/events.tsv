@@ -1,0 +1,726 @@
+# Events: a parenthetical whose contents match one of these terms is removed with its contents; any
+# other parenthetical keeps its contents. Matched in every transcript language.
+# match: word = a whole word or phrase of the contents; prefix = a word of the contents starts with it;
+# substring = anywhere in the contents (scripts written without spaces).
+term	match
+استنشاق	word
+الضحك	word
+الموسيقى	word
+انكار	word
+بكاء	word
+تصفيق	word
+تنفس	word
+تنهد	word
+تنهيدة	word
+سعال	word
+صمت	word
+ضجيج	word
+ضحك	word
+ضحكات	word
+ضحكة	word
+ضوضاء	word
+عطس	word
+عطسة	word
+غير مفهوم	word
+غير واضح	word
+قهقهة	word
+كحة	word
+موسيقى	word
+نحنحة	word
+همس	word
+يبكي	word
+يسعل	word
+يضحك	word
+يعطس	word
+অবোধগম্য	word
+অস্পষ্ট	word
+কান্না	word
+কাশি	word
+গলা পরিষ্কার	word
+গোলমাল	word
+চপচপ	word
+দীর্ঘশ্বাস	word
+নীরবতা	word
+পটভূমি কথা	word
+ফিসফিস	word
+বিদ্রূপ	word
+শব্দ	word
+শোঁকা	word
+শ্বাস	word
+সংগীত	word
+সঙ্গীত	word
+হাঁচি	word
+হাঁফ	word
+হাততালি	word
+হাসছে	word
+হাসি	word
+applaus	prefix
+beifall	prefix
+flüster	prefix
+gelächter	prefix
+geräusch	prefix
+hust	prefix
+kicher	prefix
+klatsch	prefix
+lach	prefix
+musik	prefix
+nies	prefix
+pust	prefix
+räusper	prefix
+schmatz	prefix
+schmunzel	prefix
+schnaub	prefix
+schnief	prefix
+seufz	prefix
+stöhn	prefix
+anderes geräusch	word
+atemzug	word
+atmen	word
+atmet	word
+atmung	word
+ausatmen	word
+bg sprache	word
+einatmen	word
+lippenflattern	word
+luftschnappen	word
+lärm	word
+niesen	word
+pause	word
+schlucken	word
+schweigen	word
+spottlaut	word
+stille	word
+tzz	word
+unhörbar	word
+unverständlich	word
+weinen	word
+weinend	word
+weint	word
+zungenschnalzen	word
+zähnezischen	word
+applau	prefix
+beep	prefix
+breath	prefix
+chuckl	prefix
+clap	prefix
+cough	prefix
+crosstalk	prefix
+exhal	prefix
+gasp	prefix
+giggl	prefix
+groan	prefix
+humming	prefix
+inhal	prefix
+laugh	prefix
+moan	prefix
+mumbl	prefix
+music	prefix
+noise	prefix
+overlap	prefix
+scream	prefix
+shout	prefix
+sneez	prefix
+sniff	prefix
+static	prefix
+whisper	prefix
+yawn	prefix
+applause	word
+background	word
+clear throat	word
+clears throat	word
+click	word
+clicks	word
+cries	word
+cross talk	word
+crying	word
+foreign	word
+giggle	word
+hums	word
+inaudible	word
+indistinct	word
+knock	word
+knocking	word
+laughter	word
+lip smack	word
+no speech	word
+other noise	word
+pause	word
+ringing	word
+sigh	word
+sighed	word
+sighing	word
+sighs	word
+silence	word
+singing	word
+sings	word
+smack	word
+sobbing	word
+sobs	word
+throat	word
+tsk	word
+unclear	word
+unintelligible	word
+unk	word
+aplaus	prefix
+carcajad	prefix
+carraspe	prefix
+chasquid	prefix
+estornud	prefix
+golpe	prefix
+llora	prefix
+murmull	prefix
+musica	prefix
+música	prefix
+pitid	prefix
+respir	prefix
+risa	prefix
+risilla	prefix
+risita	prefix
+ruido	prefix
+suspir	prefix
+susurr	prefix
+tosiend	prefix
+bufido de burla	word
+chasquido	word
+chasquido de labios	word
+chasquido de lengua	word
+estornudo	word
+exhalación	word
+hipo	word
+inaudible	word
+incomprensible	word
+inhalación	word
+inhalación brusca de aire	word
+ininteligible	word
+llanto	word
+otro ruido	word
+pausa	word
+riendo	word
+ríe	word
+ríen	word
+silencio	word
+sorbido	word
+succión de dientes	word
+suspiro	word
+tarareo	word
+tos	word
+tose	word
+voces de fondo	word
+applaudi	prefix
+bruit	prefix
+chuchot	prefix
+murmur	prefix
+musique	prefix
+pleur	prefix
+raclement	prefix
+respir	prefix
+ricane	prefix
+rire	prefix
+soupir	prefix
+tousse	prefix
+éternu	prefix
+aspiration entre les dents	word
+bouffée	word
+bruit	word
+claquement de langue	word
+claquement de lèvres	word
+déglutition	word
+expiration	word
+fond parole	word
+gloussement	word
+inaudible	word
+incompréhensible	word
+inintelligible	word
+inspiration	word
+pause	word
+pff	word
+raclement	word
+reniflement	word
+renâclement	word
+rient	word
+rire	word
+rit	word
+silence	word
+souffle	word
+soupir	word
+toux	word
+trille des lèvres	word
+tss	word
+éternuement	word
+tsk	word
+अस्पष्ट	word
+खंखार	word
+ख़ामोशी	word
+खाँसी	word
+खांसी	word
+खामोशी	word
+चुप्पी	word
+छींक	word
+जम्हाई	word
+तालियाँ	word
+तालियां	word
+पृष्ठभूमि आवाज़ें	word
+फुसफुसाहट	word
+रोते	word
+रोना	word
+शोर	word
+संगीत	word
+साँस	word
+सांस	word
+सुनाई नहीं	word
+हँसते	word
+हँसना	word
+हँसी	word
+हंसते	word
+हंसी	word
+batuk	prefix
+berbisik	prefix
+bersin	prefix
+bising	prefix
+ketawa	prefix
+menangis	prefix
+mendesah	prefix
+musik	prefix
+nafas	prefix
+napas	prefix
+tertawa	prefix
+batuk	word
+bersin	word
+bg bicara	word
+cekikikan	word
+decakan lidah	word
+dehaman	word
+dengusan	word
+embusan napas	word
+endusan	word
+helaan napas	word
+hening	word
+isapan gigi	word
+jeda	word
+kaget	word
+kebisingan lainnya	word
+kecapan bibir	word
+senandung	word
+sorakan	word
+sst	word
+sulit dipahami	word
+tarikan napas	word
+tawa	word
+telan ludah	word
+tepuk tangan	word
+tidak jelas	word
+tsk	word
+applaus	prefix
+canticchi	prefix
+deglut	prefix
+espir	prefix
+inspir	prefix
+music	prefix
+respir	prefix
+ridacchi	prefix
+risat	prefix
+risatin	prefix
+rumor	prefix
+sbuff	prefix
+schiarisc	prefix
+sospir	prefix
+starnut	prefix
+sussult	prefix
+sussurr	prefix
+tossisc	prefix
+bg parlato	word
+incomprensibile	word
+inudibile	word
+pausa	word
+piange	word
+pianto	word
+ride	word
+ridendo	word
+ridono	word
+risata nasale	word
+risata sprezzante	word
+risucchio coi denti	word
+schiocco di labbra	word
+schiocco di lingua	word
+si schiarisce la gola	word
+silenzio	word
+soffia	word
+tosse	word
+tossisce	word
+tsk	word
+うなり声	substring
+くしゃみ	substring
+ささやき	substring
+その他の会话	substring
+ため息	substring
+ノイズ	substring
+不明瞭	substring
+吸気	substring
+呼気	substring
+咳	substring
+咳払い	substring
+咽下	substring
+嘲笑	substring
+囁き	substring
+息吞み	substring
+息遣い	substring
+拍手	substring
+歯吸い	substring
+沈黙	substring
+泣き	substring
+泣く	substring
+溜息	substring
+無音	substring
+笑	substring
+笑い	substring
+聞き取り不能	substring
+聞き取れない	substring
+舌打ち	substring
+闻き取り不可	substring
+闻き取り不能	substring
+雑音	substring
+音楽	substring
+鼻すすり	substring
+기침	prefix
+박수	prefix
+소음	prefix
+속삭	prefix
+숨소리	prefix
+울음	prefix
+웃는	prefix
+웃으	prefix
+웃음	prefix
+음악	prefix
+잡음	prefix
+재채기	prefix
+침묵	prefix
+한숨	prefix
+기침	word
+기타 배경 소리	word
+날숨	word
+들숨	word
+목을 가다듬음	word
+배경 음성	word
+분류되지 않은 기타 소음	word
+불분명	word
+알아들을 수 없음	word
+이빨 빨기	word
+이해할 수 없음	word
+입맛을 다시는 소리	word
+코훌쩍임	word
+킬킬 웃음	word
+탁탁 치는 소리	word
+한숨	word
+헉 하는 소리	word
+혀를 쯧쯧 차는 소리	word
+अगम्य	word
+अस्पष्ट	word
+आवाज	word
+इतर आवाज	word
+उपहासात्मक हास्य	word
+कुजबुज	word
+खोकला	word
+गिळण्याचा आवाज	word
+गुणगुणणे	word
+गोंगाट	word
+घसा साफ करणे	word
+चटकार	word
+टक टक	word
+टाळ्या	word
+दचकण्याचा आवाज	word
+नाकातून हसणे	word
+पार्श्व इतर आवाज	word
+पार्श्वभूमीतील संभाषण	word
+फुत्कार	word
+मुसमुसणे	word
+रडणे	word
+रडत	word
+शांतता	word
+शिंक	word
+श्वास	word
+श्वासोत्सर्जन	word
+संगीत	word
+हर्षोल्हास	word
+हलके हसणे	word
+हसणे	word
+हसत	word
+हसू	word
+aplaus	prefix
+barulh	prefix
+cantarol	prefix
+espirr	prefix
+musica	prefix
+música	prefix
+pigarr	prefix
+respir	prefix
+risada	prefix
+risinho	prefix
+ruido	prefix
+ruído	prefix
+suspir	prefix
+sussurr	prefix
+tossind	prefix
+arquejo	word
+bocejo	word
+chora	word
+chorando	word
+choro	word
+estalo	word
+fungada	word
+inaudível	word
+incompreensível	word
+ininteligível	word
+outro som	word
+pausa	word
+pigarro	word
+risadinha	word
+riso	word
+riso contido	word
+risos	word
+silêncio	word
+tosse	word
+vozes ao fundo	word
+аплодисмент	prefix
+вздох	prefix
+вздых	prefix
+выдох	prefix
+дыхан	prefix
+кашл	prefix
+кряхт	prefix
+музык	prefix
+напева	prefix
+неразборчив	prefix
+причмок	prefix
+смеет	prefix
+смех	prefix
+смеют	prefix
+смеёт	prefix
+хихик	prefix
+чих	prefix
+чиха	prefix
+шепот	prefix
+шепч	prefix
+шмыга	prefix
+шум	prefix
+шёпот	prefix
+вдох	word
+вибрация губами	word
+втягивание воздуха сквозь зубы	word
+выдувание воздуха	word
+другой звук	word
+кашель	word
+насмешка	word
+непонятно	word
+неразборчиво	word
+пауза	word
+плач	word
+плачет	word
+плачут	word
+прочищение горла	word
+смешок	word
+тишина	word
+фон речь	word
+фырканье	word
+цоканье	word
+щелчок языком	word
+அமைதி	word
+அழுகை	word
+இசை	word
+இருமல்	word
+உச் கொட்டுதல்	word
+உதடு சொடுக்குதல்	word
+உதட்டு அதிர்வு	word
+உள்மூச்சு	word
+எச்சில் விழுங்குதல்	word
+கிசுகிசு	word
+கீச்சுச் சிரிப்பு	word
+குரல் கரகரப்பு	word
+குறுஞ்சிரிப்பு	word
+கைதட்டல்	word
+சத்தம்	word
+சிரிக்கிறார்	word
+சிரிப்பு	word
+தும்மல்	word
+தெளிவில்லை	word
+தொண்டை சுத்தம்	word
+நாக்கு சொடுக்குதல்	word
+பற்களை உறிஞ்சும்	word
+பின்னணி பேச்சு	word
+பிற சத்தம்	word
+புரியவில்லை	word
+பெருமூச்சு	word
+மூக்குச் சிரிப்பு	word
+மூக்கை உறிஞ்சியபடி	word
+மூச்சு	word
+விக்கல்	word
+అర్ధం కాని మాటలు	word
+అస్పష్టం	word
+ఇతర నేపథ్యం	word
+ఇతర నేపథ్యం చిన్నగా	word
+ఇతర శబ్దం	word
+ఏడుపు	word
+కూనిరాగం	word
+గుసగుస	word
+చప్పట్లు	word
+చిరునవ్వు	word
+తట్టడం	word
+తట్టడం చిన్నగా	word
+తుమ్ము	word
+దగ్గు	word
+నవ్వు	word
+నవ్వులు	word
+నిట్టూర్పు	word
+నిశ్శబ్దం	word
+నేపథ్య మాటలు	word
+పళ్ళు చప్పరింపు	word
+పెదాల చప్పుడు	word
+ముక్కు చీదరింపు	word
+ముసిముసి నవ్వు	word
+శబ్దం	word
+శ్వాస	word
+సంగీతం	word
+హారన్	word
+กระซิบ	substring
+กระแอม	substring
+จาม	substring
+ดนตรี	substring
+ถอนหายใจ	substring
+ปรบมือ	substring
+ฟังไม่ชัด	substring
+ฟังไม่ออก	substring
+ร้องไห้	substring
+หัวเราะ	substring
+หายใจ	substring
+เสียงกระแอม	substring
+เสียงจิ๊ปาก	substring
+เสียงรบกวน	substring
+เสียงหัวเราะเบาๆ	substring
+เงียบ	word
+เสียงดัง	word
+ไอ	word
+bulong	prefix
+bumahing	prefix
+halakhak	prefix
+hininga	prefix
+ingay	prefix
+iyak	prefix
+musika	prefix
+palakpak	prefix
+tumatawa	prefix
+umiiyak	prefix
+umuubo	prefix
+ahem	word
+bahing	word
+bg iba pa mahina	word
+bg iba pa malakas	word
+bg iba pa malinaw	word
+bg salita	word
+hagikgik	word
+hindi maintindihan	word
+huminga	word
+ibang ingay	word
+katahimikan	word
+lunok	word
+pag click ng dila	word
+pag trill ng labi	word
+singhot	word
+sinok	word
+tapik mahina	word
+tapik malakas	word
+tapik malinaw	word
+tsk	word
+tumawa	word
+tumawa nang mahina	word
+ubo	word
+alkış	prefix
+ağla	prefix
+fısılda	prefix
+gülme	prefix
+gülü	prefix
+gülüş	prefix
+gürültü	prefix
+hapşir	prefix
+hapşır	prefix
+kahkaha	prefix
+müzik	prefix
+nefes	prefix
+yutkun	prefix
+öksür	prefix
+alayci gülme	word
+ani nefes	word
+anlaşilmayan konuşma	word
+anlaşılmaz	word
+anlaşılmıyor	word
+arka plan konuşmasi	word
+boğaz temizleme	word
+ciklama	word
+diğer sesler	word
+dudak şapirtisi	word
+duyulmuyor	word
+gülme	word
+kahkaha	word
+kikirdama	word
+nefes alma	word
+nefes verme	word
+sessizlik	word
+chép miệng	word
+chậc	word
+cười	word
+cười khẽ	word
+ho	word
+hít vào	word
+hắng giọng	word
+hắt hơi	word
+hắt xì	word
+im lặng	word
+khóc	word
+không rõ	word
+khịt mũi	word
+mút răng	word
+ngâm nga	word
+nhạc	word
+thì thầm	word
+thở dài	word
+tiếng thở	word
+tiếng động khác	word
+tiếng ồn	word
+tặc lưỡi	word
+vỗ tay	word
+âm nhạc	word
+âm thanh nền lời nói	word
+ồn ào	word
+叹气	substring
+吞	substring
+听不清	substring
+吸吮牙齿	substring
+吸气	substring
+呼吸	substring
+咂嘴	substring
+咯咯笑	substring
+咳	substring
+咳嗽	substring
+哭	substring
+哼唱	substring
+啧	substring
+喷嚏	substring
+嗤笑	substring
+嘆氣	substring
+噪音	substring
+噴嚏	substring
+惊喘	substring
+打嗝	substring
+抽泣	substring
+掌声	substring
+掌聲	substring
+旁人声	substring
+杂音	substring
+沉默	substring
+清嗓	substring
+笑	substring
+耳語	substring
+耳语	substring
+聽不清	substring
+雜音	substring
+音乐	substring
+音樂	substring
+鼓掌	substring

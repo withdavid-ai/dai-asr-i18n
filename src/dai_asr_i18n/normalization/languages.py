@@ -1,4 +1,8 @@
-"""Stock Whisper and benchmark language-specific normalization implementations."""
+"""Stock Whisper and per-language normalization implementations.
+
+Each language transform is a core followed by a punctuation pass (:class:`CoreThenPunctuation`). The
+benchmark pipeline runs a language's core unchanged and replaces only its punctuation pass.
+"""
 
 from __future__ import annotations
 
@@ -32,6 +36,23 @@ INDIC_BLOCKS = {
 _THAI_PAIYANNOI = re.compile("ฯ")
 
 
+class CoreThenPunctuation(TextNormalizer):
+    """A language transform whose final punctuation pass is separable from everything before it.
+
+    ``apply`` is ``punctuation(core(text))``. The benchmark pipeline reuses ``core`` and replaces the
+    punctuation pass with its own punctuation step.
+    """
+
+    def core(self, text: str) -> str:
+        raise NotImplementedError
+
+    def punctuation(self, text: str) -> str:
+        return punctuation_to_spaces(text)
+
+    def apply(self, text: str) -> str:
+        return self.punctuation(self.core(text))
+
+
 class WhisperBasicNormalizer(TextNormalizer):
     """Stock Whisper ``BasicTextNormalizer`` for the multilingual baseline."""
 
@@ -62,31 +83,33 @@ class WhisperEnglishNormalizer(TextNormalizer):
         return self.implementation(text)
 
 
-class MarkPreservingNormalizer(TextNormalizer):
+class MarkPreservingNormalizer(CoreThenPunctuation):
     """Whisper-like cleanup that preserves meaningful Unicode marks."""
 
     key = "unicode_marks"
 
-    def apply(self, text: str) -> str:
+    def core(self, text: str) -> str:
         text = text.lower()
         text = re.sub(r"[<\[][^>\]]*[>\]]", "", text)
         text = re.sub(r"\(([^)]+?)\)", "", text)
-        return punctuation_to_spaces(unicodedata.normalize("NFKC", text).lower())
+        return unicodedata.normalize("NFKC", text).lower()
 
 
-class TurkicNormalizer(TextNormalizer):
+class TurkicNormalizer(CoreThenPunctuation):
     """Locale-correct Turkish casing that preserves dotted/dotless-i distinctions."""
 
     key = "turkic"
     _CASE_MAP = str.maketrans({"İ": "i", "I": "ı", "Ş": "ş", "Ğ": "ğ", "Ç": "ç", "Ö": "ö", "Ü": "ü"})
 
-    def apply(self, text: str) -> str:
+    def core(self, text: str) -> str:
         text = unicodedata.normalize("NFC", text).translate(self._CASE_MAP).lower()
-        text = _PUNCT.sub(" ", unicodedata.normalize("NFC", text))
-        return _WS.sub(" ", text).strip()
+        return unicodedata.normalize("NFC", text)
+
+    def punctuation(self, text: str) -> str:
+        return _WS.sub(" ", _PUNCT.sub(" ", text)).strip()
 
 
-class CjkNormalizer(TextNormalizer):
+class CjkNormalizer(CoreThenPunctuation):
     """NFKC, lowercase, and punctuation cleanup for CJK text."""
 
     key = "cjk"
@@ -96,9 +119,8 @@ class CjkNormalizer(TextNormalizer):
 
         return text
 
-    def apply(self, text: str) -> str:
-        text = unicodedata.normalize("NFKC", text).lower()
-        return punctuation_to_spaces(self._normalize_script(text))
+    def core(self, text: str) -> str:
+        return self._normalize_script(unicodedata.normalize("NFKC", text).lower())
 
 
 class SimplifiedChineseNormalizer(CjkNormalizer):
@@ -117,12 +139,12 @@ class SimplifiedChineseNormalizer(CjkNormalizer):
         return self.converter.convert(text)
 
 
-class ArabicNormalizer(TextNormalizer):
+class ArabicNormalizer(CoreThenPunctuation):
     """Unvocalized Arabic with invisible-control and letter-variant cleanup."""
 
     key = "arabic"
 
-    def apply(self, text: str) -> str:
+    def core(self, text: str) -> str:
         text = unicodedata.normalize("NFKC", text)
         # Directional controls, joiners, BOM, word joiner, and soft hyphen are invisible
         # formatting artifacts. Preserve a zero-width space as a real word boundary instead.
@@ -132,10 +154,10 @@ class ArabicNormalizer(TextNormalizer):
         text = text.replace("ـ", "")
         text = _ALEF_VARIANTS.sub("ا", text)
         text = text.replace("ى", "ي")
-        return punctuation_to_spaces(text.lower())
+        return text.lower()
 
 
-class ConservativeIndicNormalizer(TextNormalizer):
+class ConservativeIndicNormalizer(CoreThenPunctuation):
     """Indic NLP common cleanup restricted to runs in one declared script."""
 
     def __init__(self, language: str) -> None:
@@ -158,28 +180,31 @@ class ConservativeIndicNormalizer(TextNormalizer):
             do_normalize_vowel_ending=False,
         )
 
-    def apply(self, text: str) -> str:
+    def core(self, text: str) -> str:
         text = unicodedata.normalize("NFC", text).lower()
         text = text.replace("\ufeff", "").replace("\u2060", "").replace("\u00ad", "")
         text = text.replace("\u200b", " ")
         text = self._runs.sub(lambda match: self.implementation.normalize(match.group()), text)
-        return punctuation_to_spaces(unicodedata.normalize("NFC", text))
+        return unicodedata.normalize("NFC", text)
 
 
-class ThaiNormalizer(TextNormalizer):
+class ThaiNormalizer(CoreThenPunctuation):
     """NFC cleanup that preserves Thai vowel, tone, and repetition marks."""
 
     key = "thai"
 
-    def apply(self, text: str) -> str:
-        text = _THAI_PAIYANNOI.sub(" ", unicodedata.normalize("NFC", text).lower())
+    def core(self, text: str) -> str:
+        return unicodedata.normalize("NFC", text).lower()
+
+    def punctuation(self, text: str) -> str:
         # The curated pass handles ฯ (category Lo); the shared Unicode-category pass handles
         # every actual punctuation/symbol character without deleting Thai combining marks.
-        return punctuation_to_spaces(text)
+        return punctuation_to_spaces(_THAI_PAIYANNOI.sub(" ", text))
 
 
 __all__ = [
     "ArabicNormalizer",
+    "CoreThenPunctuation",
     "CjkNormalizer",
     "ConservativeIndicNormalizer",
     "MarkPreservingNormalizer",

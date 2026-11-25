@@ -759,7 +759,7 @@ wheels = [
 
 [[package]]
 name = "dai-asr-i18n"
-version = "1.2.0"
+version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "huggingface-hub" },
@@ -768,6 +768,7 @@ dependencies = [
     { name = "more-itertools" },
     { name = "opencc" },
     { name = "pyarrow" },
+    { name = "pythainlp" },
     { name = "rapidfuzz" },
     { name = "regex" },
     { name = "soundfile" },
@@ -835,6 +836,7 @@ requires-dist = [
     { name = "numpy", marker = "extra == 'speaker'", specifier = "==2.4.6" },
     { name = "opencc", specifier = "==1.4.2" },
     { name = "pyarrow", specifier = ">=18,<24" },
+    { name = "pythainlp", specifier = "==5.3.4" },
     { name = "rapidfuzz", specifier = "==3.14.6" },
     { name = "regex", specifier = "==2026.6.28" },
     { name = "scipy", marker = "python_full_version >= '3.12' and extra == 'speaker'", specifier = "==1.18.0" },
@@ -2545,6 +2547,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e4/47/b9efed96c114afcfa3c9d3fe98a76a1d14c74a9e266d397cf6eb64be5e01/pytest-9.1.1.tar.gz", hash = "sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313", size = 1636369, upload-time = "2026-06-19T10:58:32.857Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/24/25/1de2678b631f5a49215c6c96fff41ba892b0a34df68d6d80292b1b48aa7f/pytest-9.1.1-py3-none-any.whl", hash = "sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c", size = 386536, upload-time = "2026-06-19T10:58:31.347Z" },
+]
+
+[[package]]
+name = "pythainlp"
+version = "5.3.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/56/47/2364543c559eacdc63633a3f29d7467a36a33089f7a8b226a247dd12de7e/pythainlp-5.3.4.tar.gz", hash = "sha256:e66fd76fb5931834fd4e32ed54337ec62350d7654f187850e4dd4f915e9f624f", size = 19306201, upload-time = "2026-04-02T18:42:46.044Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/bd/bedc1e416eb0fa2cb5eaa990207ae67dfaf02d4986f22d5ec372c0b97ae3/pythainlp-5.3.4-py3-none-any.whl", hash = "sha256:76744e51e27c895630bafd74f53a1f0aa8782cef2f7f02eebd6427fe8ce8d84d", size = 19849568, upload-time = "2026-04-02T18:42:42.384Z" },
 ]
 
 [[package]]

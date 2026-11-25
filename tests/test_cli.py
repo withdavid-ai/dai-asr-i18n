@@ -60,6 +60,15 @@ def test_normalize_command(capsys):
     assert capsys.readouterr().out.strip() == "学习语言"
 
 
+def test_normalize_command_reads_a_hypothesis_against_a_reference(capsys):
+    assert main(["normalize", "मेरा computer", "--language", "hi", "--reference", "मेरा कंप्यूटर"]) == 0
+    assert capsys.readouterr().out.strip() == "मेरा कंप्यूटर"
+    assert main(["normalize", "मेरा computer", "--language", "hi", "--reference", "मेरा कंप्यूटर", "--json"]) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["reference"] == result["hypothesis"] == "मेरा कंप्यूटर"
+    assert [rewrite["step"] for rewrite in result["rewrites"]] == ["transliteration"]
+
+
 def test_score_command_emits_counts(capsys):
     assert main(["score", "--language", "en", "--reference", "alpha beta", "--hypothesis", "alpha"]) == 0
     result = json.loads(capsys.readouterr().out)

@@ -13,7 +13,7 @@ from typing import Any
 from dai_asr_i18n import __version__
 from dai_asr_i18n.audio import build_mono_mix, mono_mix_manifest
 from dai_asr_i18n.model_configs import list_model_configs, model_catalog, model_config
-from dai_asr_i18n.normalization import normalization_manifest, normalize_with_metadata
+from dai_asr_i18n.normalization import normalization_manifest, normalize_pair, normalize_with_metadata
 from dai_asr_i18n.scoring import aggregate_record_scores, score_pair, score_records
 
 _PROFILES = ("dai_asr_i18n", "whisper_baseline")
@@ -44,6 +44,13 @@ def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, An
 
 def _normalize_command(args: argparse.Namespace) -> int:
     text = args.text if args.text is not None else sys.stdin.read()
+    if args.reference is not None:
+        pair = normalize_pair(args.reference, text, args.language, args.profile)
+        if args.json:
+            _write_json(pair.to_dict())
+        else:
+            print(pair.hypothesis)
+        return 0
     result = normalize_with_metadata(text, args.language, args.profile)
     if args.json:
         _write_json(result.to_dict())
@@ -251,6 +258,10 @@ def parser() -> argparse.ArgumentParser:
     normalize_parser.add_argument("text", nargs="?", help="text to normalize; reads stdin when omitted")
     normalize_parser.add_argument("--language", "-l", required=True, help="BCP-47 language tag")
     normalize_parser.add_argument("--profile", choices=_PROFILES, default="dai_asr_i18n")
+    normalize_parser.add_argument(
+        "--reference",
+        help="normalize the text as a hypothesis against this reference, as scoring reads it",
+    )
     normalize_parser.add_argument("--json", action="store_true", help="include normalization provenance")
     normalize_parser.set_defaults(handler=_normalize_command)
 

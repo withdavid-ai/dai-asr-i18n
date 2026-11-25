@@ -11,6 +11,7 @@ from dai_asr_i18n import (
     hypothesis_timeline,
     jer,
     normalize,
+    normalize_pair,
     reference_from_alignment,
     score_pair,
     score_speakers,
@@ -23,6 +24,12 @@ FIXTURES = json.loads((Path(__file__).parent / "fixtures/scoring-cases.json").re
 @pytest.mark.parametrize("case", FIXTURES["normalization"])
 def test_normalization_matches_expected_results(case):
     assert normalize(case["text"], case["language"], case["profile"]) == case["expected"]
+
+
+@pytest.mark.parametrize("case", FIXTURES["pairs"])
+def test_pair_normalization_matches_expected_results(case):
+    result = normalize_pair(case["reference"], case["hypothesis"], case["language"])
+    assert (result.reference, result.hypothesis) == (case["expected_reference"], case["expected_hypothesis"])
 
 
 @pytest.mark.parametrize("case", FIXTURES["lexical"])
