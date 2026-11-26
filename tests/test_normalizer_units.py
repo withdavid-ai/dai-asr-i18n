@@ -9,9 +9,8 @@ from dai_asr_i18n.normalization import (
     ArabicNormalizer,
     CjkNormalizer,
     ConservativeIndicNormalizer,
-    DaiAsrI18nNormalizer,
+    LanguageNormalizer,
     MarkPreservingNormalizer,
-    NormalizedText,
     ParenthesisRemover,
     RegexTagRemover,
     SimplifiedChineseNormalizer,
@@ -163,10 +162,24 @@ def test_parenthesis_remover_handles_nested_unicode_parentheses_and_escapes():
     assert normalizer.resolved_key == "parentheses"
 
 
-def test_benchmark_normalizer_composes_shared_cleanup_and_language_normalization():
-    normalizer = DaiAsrI18nNormalizer(SimplifiedChineseNormalizer(), "zh")
+def test_language_normalizer_composes_shared_cleanup_and_language_normalization():
+    normalizer = LanguageNormalizer(SimplifiedChineseNormalizer(), "zh")
 
-    result = normalizer.apply("學 習（noise）{事件: 忽略}")
-    assert isinstance(result, NormalizedText)
-    assert result == "学习"
+    assert normalizer.apply("學 習（noise）{事件: 忽略}") == "学习"
     assert normalizer.resolved_key == "chinese_t2s"
+
+
+@pytest.mark.parametrize(
+    "normalizer,text",
+    [
+        (MarkPreservingNormalizer(), "ÉTÉ, l'homme [noise]"),
+        (TurkicNormalizer(), "İSTANBUL'DA, ŞİİR!"),
+        (CjkNormalizer(), "學習，ｶﾞｸｾｲ！"),
+        (SimplifiedChineseNormalizer(), "學習，語言！"),
+        (ArabicNormalizer(), "مَدْرَسَة، أهلاً"),
+        (ConservativeIndicNormalizer("hi"), "क़िला, ठीक है।"),
+        (ThaiNormalizer(), "ภาษาไทยฯ, TV!"),
+    ],
+)
+def test_language_transforms_are_a_core_then_a_punctuation_pass(normalizer, text):
+    assert normalizer.apply(text) == normalizer.punctuation(normalizer.core(text))

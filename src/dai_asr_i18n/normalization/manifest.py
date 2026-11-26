@@ -9,7 +9,10 @@ import unicodedata
 from pathlib import Path
 
 from dai_asr_i18n.languages import PUBLIC_METRIC
+from dai_asr_i18n.normalization.parentheses import event_list
+from dai_asr_i18n.normalization.pipeline import step_manifest
 from dai_asr_i18n.normalization.profiles import DAI_ASR_I18N_NORMALIZERS, POLICY_ID, WHISPER_BASELINE_NORMALIZERS
+from dai_asr_i18n.normalization.transliteration_maps import maps_digest
 from dai_asr_i18n.policies import (
     DER_POLICY_VERSION,
     JER_POLICY_VERSION,
@@ -30,6 +33,7 @@ def _policy_implementation_sha256() -> str:
     package_root = Path(__file__).parents[1]
     policy_files = [package_root / "languages.py", package_root / "policies.py"]
     policy_files.extend((package_root / "normalization").glob("*.py"))
+    policy_files.extend((package_root / "normalization" / "resources").rglob("*.tsv"))
     policy_files.extend((package_root / "scoring").glob("*.py"))
     policy_files.extend((package_root / "evaluation").glob("*.py"))
     digest = hashlib.sha256()
@@ -51,6 +55,7 @@ def normalization_manifest(*, include_opencc_hashes: bool = True) -> dict[str, o
             "indic-nlp-library",
             "whisper-normalizer",
             "more-itertools",
+            "pythainlp",
             "regex",
             "jiwer",
             "rapidfuzz",
@@ -93,6 +98,11 @@ def normalization_manifest(*, include_opencc_hashes: bool = True) -> dict[str, o
         "packages": packages,
         "dai_asr_i18n_normalizers": dict(sorted(DAI_ASR_I18N_NORMALIZERS.items())),
         "whisper_baseline_normalizers": dict(sorted(WHISPER_BASELINE_NORMALIZERS.items())),
+        **step_manifest(),
+        "resources": {
+            "events_sha256": event_list().sha256,
+            "transliteration_maps_sha256": maps_digest(),
+        },
         "opencc_config": "t2s.json",
         "resource_hashes_included": include_opencc_hashes,
         "opencc_resource_sha256": resource_hashes,
@@ -100,8 +110,9 @@ def normalization_manifest(*, include_opencc_hashes: bool = True) -> dict[str, o
         "wer_unit": "whitespace-delimited word; unavailable for zh, ja, and th",
         "ser_unit": "whitespace-delimited orthographic syllable; Vietnamese only",
         "formatting_escape_allowlist": ["U+00A0", "U+200C", "U+200D", "U+3000"],
-        "parentheses": "strip parenthesized content, including nested and Unicode variants",
+        "parentheses": "remove event parentheticals with their contents; keep the contents of the others",
         "cjk_spacing": "ja/zh: remove spaces only between Han/kana characters",
+        "pair_normalization": "hypothesis only, into a spelling the reference writes; never adds an error",
     }
 
 

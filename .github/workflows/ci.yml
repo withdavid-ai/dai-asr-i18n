@@ -46,6 +46,7 @@ jobs:
           /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n --version
           /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n score \
             --language zh --reference '學習語言' --hypothesis '学习语言'
+          /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n normalize --language hi --reference 'मेरा कंप्यूटर' 'मेरा computer'
           printf '%s\n' '{"language":"en","reference":"alpha beta","hypothesis":"alpha"}' | \
             /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n score --input -
           /tmp/dai-asr-i18n-wheel/bin/dai-asr-i18n manifest --no-resource-hashes

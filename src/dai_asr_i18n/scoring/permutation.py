@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from typing import Any, Literal, cast
 
-from dai_asr_i18n.normalization import canonical_profile, normalize_with_metadata
+from dai_asr_i18n.normalization import canonical_profile, normalize_pair, normalize_with_metadata
 from dai_asr_i18n.policies import METRIC_POLICY_VERSION, SCORING_POLICY_VERSION
 from dai_asr_i18n.scoring.alignment import align_tokens, tokens_for_metric
 from dai_asr_i18n.scoring.core import _resolve_metric
@@ -67,8 +67,13 @@ def _validate_speaker_texts(value: Mapping[str, str], side: str) -> dict[str, st
 def _align_speakers(
     reference: Mapping[str, list[str]],
     hypothesis: Mapping[str, list[str]],
+    paired: Mapping[tuple[str, str], list[str]],
 ) -> tuple[EditCounts, SpeakerAssignment, str]:
-    """Minimize total edit errors over a square speaker assignment."""
+    """Minimize total edit errors over a square speaker assignment.
+
+    ``paired[(r, h)]`` holds hypothesis speaker ``h``'s tokens as normalized against reference speaker ``r``;
+    ``hypothesis[h]`` holds them normalized on their own, for a hypothesis speaker left without a reference.
+    """
 
     try:
         from scipy.optimize import linear_sum_assignment
@@ -82,14 +87,16 @@ def _align_speakers(
         return EditCounts(), (), f"scipy-{importlib.metadata.version('scipy')}-linear_sum_assignment"
     reference_labels.extend([None] * (size - len(reference_labels)))
     hypothesis_labels.extend([None] * (size - len(hypothesis_labels)))
+
+    def cell(reference_speaker: str | None, hypothesis_speaker: str | None) -> EditCounts:
+        if hypothesis_speaker is None:
+            return align_tokens([] if reference_speaker is None else reference[reference_speaker], [])
+        if reference_speaker is None:
+            return align_tokens([], hypothesis[hypothesis_speaker])
+        return align_tokens(reference[reference_speaker], paired[reference_speaker, hypothesis_speaker])
+
     candidates = [
-        [
-            align_tokens(
-                [] if reference_speaker is None else reference[reference_speaker],
-                [] if hypothesis_speaker is None else hypothesis[hypothesis_speaker],
-            )
-            for hypothesis_speaker in hypothesis_labels
-        ]
+        [cell(reference_speaker, hypothesis_speaker) for hypothesis_speaker in hypothesis_labels]
         for reference_speaker in reference_labels
     ]
     rows, columns = linear_sum_assignment([[score.numerator for score in row] for row in candidates])
@@ -111,6 +118,12 @@ def score_speakers(
 ) -> PermutationScore:
     """Normalize and score speaker-attributed text in the selected public or explicit unit.
 
+    Every reference speaker and hypothesis speaker that could be matched is normalized as a pair
+    (:func:`dai_asr_i18n.normalization.normalize_pair`), so the pair steps apply as they do in :func:`score_pair`, and
+    the assignment is chosen on those counts. A hypothesis speaker left without a reference is normalized on its
+    own. ``hypothesis_normalized`` holds each hypothesis speaker's text as normalized under the chosen
+    assignment.
+
     Automatic selection reports cpCER for the public CER languages and cpWER elsewhere. Vietnamese
     is externally labeled cpWER while retaining ``source_metric="cpser"`` and ``unit="syllable"``.
     """
@@ -120,20 +133,28 @@ def score_speakers(
     hypothesis = _validate_speaker_texts(hypothesis_by_speaker, "hypothesis")
     probe = normalize_with_metadata("", code, profile)
 
-    def normalized(values: Mapping[str, str]) -> dict[str, str]:
-        return {
-            speaker: str(normalize_with_metadata(text, code, profile).text) for speaker, text in sorted(values.items())
-        }
-
-    normalized_reference = normalized(reference)
-    normalized_hypothesis = normalized(hypothesis)
-    tokenized_reference = {
-        speaker: tokens_for_metric(text, source_metric) for speaker, text in normalized_reference.items()
+    normalized_reference = {
+        speaker: str(normalize_with_metadata(text, code, profile).text) for speaker, text in sorted(reference.items())
     }
-    tokenized_hypothesis = {
-        speaker: tokens_for_metric(text, source_metric) for speaker, text in normalized_hypothesis.items()
+    alone = {
+        speaker: str(normalize_with_metadata(text, code, profile).text) for speaker, text in sorted(hypothesis.items())
     }
-    counts, assignment, scorer = _align_speakers(tokenized_reference, tokenized_hypothesis)
+    paired = {
+        (reference_speaker, hypothesis_speaker): normalize_pair(
+            reference[reference_speaker], hypothesis[hypothesis_speaker], code, profile
+        ).hypothesis
+        for reference_speaker in reference
+        for hypothesis_speaker in hypothesis
+    }
+    counts, assignment, scorer = _align_speakers(
+        {speaker: tokens_for_metric(text, source_metric) for speaker, text in normalized_reference.items()},
+        {speaker: tokens_for_metric(text, source_metric) for speaker, text in alone.items()},
+        {key: tokens_for_metric(text, source_metric) for key, text in paired.items()},
+    )
+    normalized_hypothesis = dict(alone)
+    for reference_speaker, hypothesis_speaker in assignment:
+        if reference_speaker is not None and hypothesis_speaker is not None:
+            normalized_hypothesis[hypothesis_speaker] = paired[reference_speaker, hypothesis_speaker]
     unit = "character" if source_metric == "cer" else ("syllable" if source_metric == "ser" else "word")
     return PermutationScore(
         language=code,

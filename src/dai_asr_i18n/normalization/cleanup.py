@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 import unicodedata
 
+import regex
+
 from dai_asr_i18n.normalization.base import TextNormalizer
 
 _WS = re.compile(r"\s+")
@@ -13,13 +15,21 @@ _WS = re.compile(r"\s+")
 _FORMATTING_ESCAPE = re.compile(r"\\+u(200[cCdD]|00[aA]0|3000)")
 _PAREN_OPENERS = "⁽₍❨❪⟮⦅⸨⹙⹛﴿︵﹙（｟"
 _PAREN_CLOSERS = "⁾₎❩❫⟯⦆⸩⹚⹜﴾︶﹚）｠"
-_PAREN_TRANSLATION = {ord(c): ord("(") for c in _PAREN_OPENERS} | {ord(c): ord(")") for c in _PAREN_CLOSERS}
+PARENTHESIS_TRANSLATION = {ord(c): ord("(") for c in _PAREN_OPENERS} | {ord(c): ord(")") for c in _PAREN_CLOSERS}
 _PARENTHESES = re.compile(r"\([^()]*\)")
+# Spaces between Han and kana characters, removed in Japanese and Chinese.
+CJK_SPACE = regex.compile(r"(?<=[\p{Han}\p{Hiragana}\p{Katakana}ー])\s+(?=[\p{Han}\p{Hiragana}\p{Katakana}ー])")
 
 _ANNOTATION_TAG = re.compile(r"\[[^\[\]]{0,80}\]")
 _HAS_LETTER = re.compile(r"[^\W\d_]", re.UNICODE)
 _ANNOTATION_BRACE = re.compile(r"\{([^{}]{0,200})\}")
 _ANNOTATION_SGML = re.compile(r"</?[^<>]{0,120}>")
+
+
+def decode_formatting_escapes(text: str) -> str:
+    """Decode the closed allowlist of serialization escapes (U+00A0, U+200C, U+200D, U+3000)."""
+
+    return _FORMATTING_ESCAPE.sub(lambda match: chr(int(match.group(1), 16)), text)
 
 
 def punctuation_to_spaces(text: str) -> str:
@@ -65,8 +75,7 @@ class ParenthesisRemover(TextNormalizer):
     key = "parentheses"
 
     def apply(self, text: str) -> str:
-        text = _FORMATTING_ESCAPE.sub(lambda match: chr(int(match.group(1), 16)), text)
-        text = text.translate(_PAREN_TRANSLATION)
+        text = decode_formatting_escapes(text).translate(PARENTHESIS_TRANSLATION)
         while _PARENTHESES.search(text):
             text = _PARENTHESES.sub(" ", text)
         return text.replace("(", " ").replace(")", " ")
@@ -89,9 +98,12 @@ def strip_annotations(text: str) -> str:
 
 
 __all__ = [
+    "CJK_SPACE",
+    "PARENTHESIS_TRANSLATION",
     "AnnotationRemover",
     "ParenthesisRemover",
     "RegexTagRemover",
+    "decode_formatting_escapes",
     "prepare_scoring_text",
     "punctuation_to_spaces",
     "strip_annotations",

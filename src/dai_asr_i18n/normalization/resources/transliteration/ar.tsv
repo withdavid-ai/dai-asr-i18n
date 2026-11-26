@@ -1,0 +1,505 @@
+native	target	decision	occurrences	preferred
+café	café	map	2	no
+déjà	déjà	map	1	no
+ارجنتينا	argentina	map	2	no
+ارنولد	arnold	map	2	no
+اريزونا	arizona	map	1	no
+اسباني	español	map	4	no
+اسبانيا	españa	map	13	no
+است	it's	map	8	no
+استراتيجي	strategic	map	2	no
+استراتيجية	strategy	map	3	no
+استراليا	australia	map	2	no
+استرتش	stretch	map	2	no
+استرليني	sterling	map	2	no
+استوديو	studio	map	3	no
+اسرش	search	map	1	no
+اسفلت	asphalt	map	1	no
+اسكتلندا	scotland	map	1	no
+اسكرول	scroll	map	4	no
+اسكواش	squash	map	1	no
+افات	pdf	map	2	no
+افري	every	map	1	no
+افريقيا	africa	map	5	no
+افلتر	filter	map	5	no
+اكاديمي	academy	map	4	no
+اكتو	octo	map	1	no
+اكر	acre	map	1	no
+اكس	x	map	4	no
+اكشن	action	map	2	no
+الكتروني	electronic	map	1	no
+اليكسا	alexa	map	1	no
+امازون	amazon	map	5	no
+امبابي	mbappé	map	2	no
+امريبوت	mr. robot	map	1	no
+امريكا	america	map	76	no
+امريكان	american	map	1	no
+انترنت	internet	map	7	no
+انجلترا	england	map	6	no
+انجلوس	ángeles	map	2	no
+انجليزي	english	map	18	no
+اند	and	map	1	no
+اندومي	indomie	map	1	no
+اندونيسيا	indonesia	map	2	no
+انستجرام	instagram	map	3	no
+انستغرام	instagram	map	2	no
+اوبس	oops	map	1	no
+اوربا	europe	map	2	no
+اوروبا	europe	map	46	no
+اوز	use	map	2	no
+اوك	okay	map	3	no
+اوكرانيا	ukraina	map	8	no
+اوكي	okay	map	175	no
+اوميغا	omega	map	1	no
+اون	online	map	4	no
+اونلاين	online	map	10	no
+اوه	oh	map	33	no
+اوهايو	ohio	map	2	no
+ايباد	ipad	map	2	no
+ايديال	ideal	map	1	no
+ايطالي	italiano	map	13	no
+ايطاليا	italia	map	38	no
+ايفون	iphone	map	1	no
+ايلون	elon	map	1	no
+ايميل	email	map	4	no
+باستيزي	pastizzi	map	1	no
+باكستان	pakistan	map	2	no
+بامبي	bambi	map	5	no
+بتيشيرت	t-shirt	map	2	no
+برافو	bravo	map	75	no
+برجر	burger	map	4	no
+برشلونة	barcelona	map	1	no
+برنس	prince	map	4	no
+بروتين	protein	map	6	no
+بريستول	bristol	map	3	no
+بريطانيا	britain	map	1	no
+بريك	break	map	1	no
+بكالوريوس	baccalaureate	map	1	no
+بلاسيبو	placebo	map	2	no
+بلايستيشن	playstation	map	12	no
+بلوك	block	map	2	no
+بنجال	bengali	map	1	no
+بنك	bank	map	6	no
+بوخارست	bucurești	map	4	no
+بودر	powder	map	3	no
+بوست	post	map	3	no
+بوسطن	boston	map	6	no
+بوكس	box	map	1	no
+بوكسير	boxer	map	1	no
+بوكلت	booklet	map	1	no
+بولو	polo	map	1	no
+بوليستر	polyester	map	1	no
+بوم	boom	map	1	no
+بونج	pong	map	1	no
+بوهيمي	bohemian	map	2	no
+بيبسي	pepsi	map	2	no
+بيبي	baby	map	3	no
+بيتزا	pizza	map	29	no
+بيج	beige	map	5	no
+بيرة	beer	map	1	no
+بيكاسو	picasso	map	1	no
+بيكينج	baking	map	4	no
+بينج	ping	map	1	no
+بيورو	perú	map	1	no
+تابلت	tablet	map	2	no
+تاسك	task	map	2	no
+تاسكات	tasks	map	22	no
+تاكسي	taxi	map	3	no
+تايكوندو	taekwondo	map	2	no
+تايوان	taiwan	map	1	no
+ترافولتا	travolta	map	3	no
+ترانزيت	transit	map	1	no
+تركات	tracks	map	1	no
+تركيا	türkiye	map	4	no
+ترمس	thermos	map	10	no
+تروما	trauma	map	4	no
+تستوستيرون	testosterone	map	3	no
+تشيبولا	cipolla	map	1	no
+تشيلي	chile	map	14	no
+تكساس	texas	map	1	no
+تكنولوجيا	technology	map	6	no
+تكنيك	technique	map	1	no
+تلفزيون	television	map	9	no
+تليفون	telephone	map	13	no
+تنس	tennis	map	2	no
+تو	to	map	12	no
+توستر	toaster	map	2	no
+تولستوي	tolstoy	map	6	no
+تويتر	twitter	map	7	no
+تويوتا	toyota	map	1	no
+تيتو	tito	map	2	no
+تيشيرت	t-shirt	map	18	no
+تينيسي	tennessee	map	1	no
+ثيمة	theme	map	1	no
+جاردن	garden	map	1	no
+جاز	gas	map	1	no
+جاكي	jackie	map	2	no
+جاكيت	jacket	map	2	no
+جرام	gram	map	1	no
+جراند	grand	map	2	no
+جروب	group	map	3	no
+جروك	grok	map	2	no
+جواكت	jackets	map	1	no
+جوجل	google	map	6	no
+جول	goal	map	2	no
+جونيور	júnior	map	2	no
+جيتس	gates	map	2	no
+جيري	jerry	map	2	no
+جيلي	jelly	map	2	no
+جيم	jim	map	2	no
+جين	gene	map	2	no
+جينز	jeans	map	2	no
+داتا	data	map	1	no
+دايت	diet	map	1	no
+دراما	drama	map	5	no
+درامز	drums	map	2	no
+دكتور	doctor	map	38	no
+دكتوراه	doctorate	map	3	no
+دوت	dot	map	3	no
+دولار	dollar	map	9	no
+دويته	duetto	map	2	no
+ديبورا	deborah	map	4	no
+ديبورة	deborah	map	1	no
+ديبون	dupont	map	2	no
+ديستويفسكي	dostoevsky	map	2	no
+ديكتاتور	dictator	map	2	no
+دينيرو	de niro	map	2	no
+راب	rap	map	3	no
+راديو	radio	map	1	no
+راوتر	router	map	1	no
+رت	rate	map	2	no
+رتم	rhythm	map	2	no
+روت	routine	map	2	no
+روتين	routine	map	29	no
+روسيا	rossiya	map	24	no
+رولز	rolls	map	4	no
+روما	roma	map	8	no
+روماتويد	rheumatoid	map	1	no
+رومانسي	romantic	map	3	no
+رومانسية	romantic	map	7	no
+رومانيا	romania	map	9	no
+روميو	romeo	map	1	no
+رونالدو	ronaldo	map	6	no
+رويس	royce	map	4	no
+ريتم	rhythm	map	2	no
+ريست	wrist	map	1	no
+ريموت	remote	map	2	no
+زهايمر	alzheimer	map	2	no
+زوكربيرج	zuckerberg	map	1	no
+سام	sam	map	5	no
+ساندوتش	sandwich	map	2	no
+ساندويتش	sandwich	map	5	no
+ساندي	sandy	map	4	no
+سايبر	cyber	map	2	no
+سبيكر	speaker	map	2	no
+ستانليس	stainless	map	2	no
+ستايل	style	map	2	no
+ستوديو	studio	map	2	no
+ستورمي	stormy	map	1	no
+ستيكر	sticker	map	1	no
+ستيل	steel	map	2	no
+سرشت	searched	map	2	no
+سرينا	serena	map	1	no
+سفنكس	sphinx	map	1	no
+سكرين	screen	map	2	no
+سكشن	section	map	2	no
+سلندر	cylinder	map	5	no
+سنت	cent	map	2	no
+سندوتيش	sandwich	map	1	no
+سوبر	super	map	2	no
+سوبرماركت	supermarket	map	2	no
+سوري	sorry	map	1	no
+سوشيال	social	map	2	no
+سيتي	city	map	1	no
+سيتيز	cities	map	2	no
+سيراميكا	ceramica	map	1	no
+سيرفيز	service	map	1	no
+سيروتينين	serotonin	map	1	no
+سيستم	system	map	2	no
+سيل	sale	map	5	no
+سيناريو	scenario	map	3	no
+شات	chat	map	2	no
+شارموفرز	sharmoofers	map	2	no
+شاليه	chalet	map	1	no
+شروكي	cherokee	map	2	no
+شكسبير	shakespeare	map	2	no
+شوكليت	chocolate	map	1	no
+شيبسي	chipsy	map	7	no
+شيف	chef	map	2	no
+شيفت	shift	map	10	no
+شيك	chic	map	19	no
+شيكسبير	shakespeare	map	7	no
+شينجن	schengen	map	1	no
+صوص	sauce	map	4	no
+عفروتو	afroto	map	7	no
+عمريبوت	mr. robot	map	1	no
+فازلين	vaseline	map	2	no
+فانتازيا	fantasy	map	2	no
+فبراير	february	map	5	no
+فرنسا	france	map	7	no
+فريش	fresh	map	2	no
+فلاتر	filters	map	2	no
+فلتر	filter	map	2	no
+فلوريدا	florida	map	3	no
+فنلندا	finland	map	2	no
+فوبيا	phobia	map	1	no
+فوليه	folie	map	1	no
+فيتا	feta	map	1	no
+فيد	feed	map	1	no
+فيديو	video	map	84	no
+فيراري	ferrari	map	2	no
+فيرجينيا	virginia	map	9	no
+فيزا	visa	map	5	no
+فيسبوك	facebook	map	19	no
+فيلم	film	map	130	no
+فيليبس	phelps	map	2	no
+فينيس	venice	map	4	no
+فينيسوس	vinícius	map	1	no
+فينيسيا	venezia	map	10	no
+فينيسيوس	vinícius	map	1	no
+كابتن	captain	map	4	no
+كاتشب	ketchup	map	2	no
+كاراتيه	karate	map	1	no
+كارامازوف	karamazov	map	2	no
+كارت	card	map	8	no
+كارد	card	map	2	no
+كارفور	carrefour	map	2	no
+كارولي	carolina	map	1	no
+كاري	carrey	map	2	no
+كاريزما	charisma	map	2	no
+كاريوكي	karaoke	map	3	no
+كاسترد	custard	map	1	no
+كاش	cash	map	1	no
+كافيتيريا	cafeteria	map	2	no
+كافيين	caffeine	map	24	no
+كالزون	calzone	map	1	no
+كالوري	calorie	map	2	no
+كاليفورنيا	california	map	3	no
+كاموميل	chamomile	map	1	no
+كانتالوب	cantaloupe	map	1	no
+كانون	canon	map	2	no
+كايروكي	cairokee	map	1	no
+كتالوج	catalogue	map	2	no
+كرتون	cartoon	map	3	no
+كرواساو	croissant	map	1	no
+كرواسون	croissant	map	2	no
+كروت	card	map	1	no
+كروز	cruise	map	2	no
+كرياتين	creatine	map	1	no
+كريستيانو	cristiano	map	8	no
+كلاشيه	cliché	map	2	no
+كلبس	clips	map	1	no
+كلوب	club	map	1	no
+كليب	clip	map	2	no
+كمبيوتر	computer	map	6	no
+كنتاكي	kentucky	map	5	no
+كندا	canada	map	1	no
+كوتش	coach	map	1	no
+كود	code	map	4	no
+كورس	course	map	6	no
+كورونا	corona	map	9	no
+كوري	korean	map	6	no
+كوفيد	covid	map	6	no
+كوكتيل	cocktail	map	1	no
+كولومبس	columbus	map	2	no
+كوميدي	comedy	map	16	no
+كوميديا	comedy	map	16	no
+كيدج	cage	map	2	no
+كيروكي	cairokee	map	2	no
+كيك	cake	map	2	no
+كيلو	kilo	map	13	no
+كيلوباترا	cleopatra	map	1	no
+كييف	kyiv	map	2	no
+لابتوب	laptop	map	3	no
+لاتيه	latte	map	1	no
+لاند	land	map	1	no
+لايت	light	map	1	no
+لايف	live	map	8	no
+لايك	like	map	1	no
+لاين	line	map	4	no
+لندن	london	map	3	no
+لوتس	lotus	map	1	no
+لوس	los	map	3	no
+لوكس	luxe	map	1	no
+لومير	lumière	map	1	no
+ليزك	lasik	map	1	no
+ليفربول	liverpool	map	3	no
+ليونيل	lionel	map	1	no
+ماتش	match	map	25	no
+مارت	mart	map	1	no
+مارجريتا	margherita	map	1	no
+مارشميلو	marshmallow	map	1	no
+مارك	mark	map	10	no
+ماركات	markets	map	1	no
+ماركت	market	map	18	no
+ماري	mary	map	6	no
+مارينا	marina	map	1	no
+ماستر	master	map	2	no
+ماسكات	masks	map	1	no
+مافيا	mafia	map	4	no
+ماك	mac	map	2	no
+ماكياج	maquillage	map	1	no
+مالطا	malta	map	5	no
+مالطة	malta	map	1	no
+مامي	mummy	map	3	no
+ماي	may	map	1	no
+مايك	mic	map	1	no
+مايكروسوفت	microsoft	map	1	no
+مايكرويف	microwave	map	8	no
+مايكل	michael	map	2	no
+متشيجن	michigan	map	1	no
+مدريد	madrid	map	6	no
+مراسي	marassi	map	1	no
+مرسيدس	mercedes	map	4	no
+مساج	massage	map	7	no
+ملي	milli	map	1	no
+مليونير	millionaire	map	5	no
+موبايل	mobile	map	27	no
+مود	mood	map	3	no
+موديل	model	map	3	no
+موريتانيا	mauritania	map	5	no
+مورينيو	mourinho	map	1	no
+مولتو	molto	map	1	no
+مونتانا	montana	map	1	no
+مونيكا	monica	map	2	no
+ميتشجن	michigan	map	1	no
+ميديا	media	map	28	no
+ميرسي	merci	map	17	no
+ميسي	messi	map	4	no
+ميسيسبي	mississippi	map	1	no
+ميكانيكي	mechanic	map	5	no
+ميكروباص	microbus	map	3	no
+ميلانو	milano	map	8	no
+ميلودي	melody	map	1	no
+ميمز	memes	map	2	no
+ميني	mini	map	1	no
+نازا	nasa	map	1	no
+نانسي	nancy	map	5	no
+نبراسا	n'brasa	map	2	no
+نتفلكس	netflix	map	2	no
+نتفليكس	netflix	map	8	no
+نجرسكو	negresco	map	2	no
+نجريسكو	negresco	map	1	no
+نسكافيه	nescafé	map	7	no
+نو	no	map	1	no
+نوبل	nobel	map	5	no
+نورث	north	map	1	no
+نورماندي	normandie	map	2	no
+نيبال	nepāl	map	1	no
+نيرو	niro	map	2	no
+نيكولاس	nicolas	map	2	no
+نيويورك	new york	map	21	no
+هارد	hard	map	16	no
+هارلم	harlem	map	3	no
+هامبرجر	hamburger	map	4	no
+هاملت	hamlet	map	6	no
+هايب	hype	map	1	no
+هايبر	hyper	map	2	no
+هرمون	hormone	map	3	no
+هستيريا	hysteria	map	2	no
+هندوراس	honduras	map	1	no
+هور	hormone	map	2	no
+هيروغريفي	hieroglyphic	map	1	no
+واتساب	whatsapp	map	9	no
+واو	wow	map	15	no
+ويجز	wegz	map	4	no
+يابان	japan	map	1	no
+يفلتر	filter	map	2	no
+يناير	january	map	2	no
+يوتيوب	youtube	map	17	no
+يوتيوبر	youtuber	map	4	no
+يورو	euro	map	6	no
+يوليوس	julius	map	1	no
+اكاونت	account	preferred		yes
+اكونت	account	preferred		yes
+اكشن	action	preferred		yes
+امازون	amazon	preferred		yes
+ابل	apple	preferred		yes
+بيبي	baby	preferred		yes
+باسكت	basket	preferred		yes
+بلوك	block	preferred		yes
+بوكس	box	preferred		yes
+برافو	bravo	preferred		yes
+بريك	break	preferred		yes
+بزنس	business	preferred		yes
+بيزنس	business	preferred		yes
+كافيه	cafe	preferred		yes
+كافيين	caffeine	preferred		yes
+كول	call	preferred		yes
+كالوري	calorie	preferred		yes
+كابتشينو	cappuccino	preferred		yes
+كاش	cash	preferred		yes
+كاريزما	charisma	preferred		yes
+شيف	chef	preferred		yes
+كوميدي	comedy	preferred		yes
+كورس	course	preferred		yes
+كوفيد	covid	preferred		yes
+درامز	drums	preferred		yes
+ايجبت	egypt	preferred		yes
+فيسبوك	facebook	preferred		yes
+فيسبوك انستغرام تويتر	facebook instagram twitter	preferred		yes
+فريش	fresh	preferred		yes
+جوجل	google	preferred		yes
+جروب	group	preferred		yes
+هاملت	hamlet	preferred		yes
+انستجرام	instagram	preferred		yes
+ايفون	iphone	preferred		yes
+لابتوب	laptop	preferred		yes
+لايك	like	preferred		yes
+لينك	link	preferred		yes
+لود	load	preferred		yes
+مافيا	mafia	preferred		yes
+مول	mall	preferred		yes
+مارك زوكربيرج	mark zuckerberg	preferred		yes
+ماركت	market	preferred		yes
+ماتش	match	preferred		yes
+ميديا	media	preferred		yes
+ميمز	memes	preferred		yes
+مرسيدس	mercedes	preferred		yes
+مايكرويف	microwave	preferred		yes
+ميكس	mix	preferred		yes
+موديل	model	preferred		yes
+مود	mood	preferred		yes
+نجريسكو	negresco	preferred		yes
+نتفلكس	netflix	preferred		yes
+نتفليكس	netflix	preferred		yes
+نوتس	notes	preferred		yes
+اوكي	okay	preferred		yes
+اوميغا	omega	preferred		yes
+اونلاين	online	preferred		yes
+اوفر	over	preferred		yes
+فوبيا	phobia	preferred		yes
+بينج	ping	preferred		yes
+بيتزا	pizza	preferred		yes
+بلان	plan	preferred		yes
+بلايستيشن	playstation	preferred		yes
+بولو	polo	preferred		yes
+بوست	post	preferred		yes
+بوستات	posts	preferred		yes
+برزنتيشن	presentation	preferred		yes
+بروجرام	program	preferred		yes
+راندوم	random	preferred		yes
+راب	rap	preferred		yes
+ريموتلي	remotely	preferred		yes
+ريتم	rhythm	preferred		yes
+روتين	routine	preferred		yes
+سكشن	section	preferred		yes
+شيفت	shift	preferred		yes
+سوشيال ميديا	social media	preferred		yes
+سوري	sorry	preferred		yes
+ستايل	style	preferred		yes
+تيشيرت	t shirt	preferred		yes
+تابلت	tablet	preferred		yes
+تاسك	task	preferred		yes
+تاسكات	tasks	preferred		yes
+تيم	team	preferred		yes
+تلفزيون	television	preferred		yes
+تايمر	timer	preferred		yes
+ترانزيت	transit	preferred		yes
+تروما	trauma	preferred		yes
+ترند	trend	preferred		yes
+تريند	trend	preferred		yes
+تيبيكال	typical	preferred		yes
+واو	wow	preferred		yes
+اكس	x	preferred		yes
+يوتيوب	youtube	preferred		yes

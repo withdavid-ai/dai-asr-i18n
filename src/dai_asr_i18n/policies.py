@@ -1,8 +1,8 @@
 """Stable identifiers for published normalization and scoring behavior."""
 
-NORMALIZATION_POLICY_ID = "dai-asr-i18n-normalization-v9"
+NORMALIZATION_POLICY_ID = "dai-asr-i18n-normalization-v10"
 METRIC_POLICY_VERSION = "benchmark-primary-v1"
-SCORING_POLICY_VERSION = "dai-asr-i18n-offline-scoring-v3"
+SCORING_POLICY_VERSION = "dai-asr-i18n-offline-scoring-v4"
 DER_POLICY_VERSION = "dai-asr-i18n-der-v9"
 JER_POLICY_VERSION = "dai-asr-i18n-jer-v3"
 SPEAKER_COUNT_POLICY_VERSION = "dai-asr-i18n-speaker-count-v4"
